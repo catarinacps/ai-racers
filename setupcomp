@@ -1,0 +1,5 @@
+echo "PATH=\$PATH:~/.local/bin" >> ~/.bashrc
+python3 get-pip.py --user
+python3 -m pip install --user pygame
+python3 -m pip install --user image
+python3 -m pip install --user numpy
