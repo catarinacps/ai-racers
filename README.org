@@ -1,0 +1,53 @@
+#+title: ai-racers
+#+author: Henrique Silva
+#+email: hcpsilva@inf.ufrgs.br
+#+infojs_opt:
+#+property: cache yes
+#+property: results graphics
+#+property: exports both
+#+property: tangle yes
+
+Nesse repositório pretendemos implentar 3 algoritmos de técnicas de inteligência
+artificial para desenvolver um controlador de um carro numa pista de corrida,
+que competirá contra outro carro. Esse trabalho corresponde ao primeiro trabalho
+prático da disciplina.
+
+** Sumário                                                           :TOC_3:
+  - [[#tarefas][Tarefas]]
+  - [[#utilização][Utilização]]
+  - [[#contato][Contato]]
+
+** Tarefas
+
+Da definição do trabalho:
+
+#+begin_quote
+O objetivo deste trabalho é utilizar técnicas de Inteligência Artificial para
+desenvolver um controlador capaz de controlar um carro em uma pista de corrida,
+na qual compete contra outro carro. O programa de IA a ser desenvolvido deverá
+ser capaz de decidir qual melhor ação tomar nas diversas situações possíveis,
+levando em consideração algumas informações sobre o ambiente e o inimigo.
+
+As técnicas de IA a serem utilizadas para resolução deste trabalho ficam a
+critério de cada trio, mas deverão envolver os métodos de Busca Local estudados
+na disciplina, como Hill Climbing, Busca em Feixe Local, Algoritmos Genéticos,
+Simulated Annealing, e CMA-ES. É obrigatória a implementação de pelo menos 3
+(três) algoritmos. Os grupos poderão, alternativamente, utilizar variantes
+destes métodos (ou outros métodos de busca local), caso achem apropriado.
+#+end_quote
+
+** Utilização
+
+Exemplo da chamada em linha de comando:
+
+#+begin_src bash :tangle yes
+python AIRacers.py <ação> -w <pesos_iniciais> -t <pista> -b <oponente>
+#+end_src
+
+** Contato
+
+Você pode entrar em contato comigo por:
+
+#+begin_quote
+hcpsilva@inf.ufrgs.br
+#+end_quote
