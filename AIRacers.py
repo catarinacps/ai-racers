@@ -172,6 +172,7 @@ if __name__ == '__main__':
         fake_sensors = [53, 66, 100, 1, 172.1353274581511, 150, -1, 0, 0]
         features_len = len(ctrl_temp.compute_features(fake_sensors))
         weights = [random.uniform(-1, 1) for i in range(0, features_len * 5)]
+        print(weights)
     else:
         weights = numpy.loadtxt(args.w[0])
 
