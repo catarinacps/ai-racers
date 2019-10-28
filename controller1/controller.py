@@ -46,9 +46,10 @@ class Controller(controller_template.Controller):
         features = self.compute_features(self.sensors)
         print("Computed features: ", features)
 
-        # preference = -1
-        # highest = -1
-        # for i in range(self.num_features):
+        preference = -1
+        highest = -1
+        #for i in range(self.num_features):
+
         #     action[i] = numpy.dot(weights[i],features) # falta o peso constante
         #     if action[i] > highest:
         #         highest = action[i]
@@ -77,7 +78,7 @@ class Controller(controller_template.Controller):
         :return: A list containing the features you defined
         """
 
-        print("Previous state: ",self.prev_st)
+        print("Previous state: ", self.prev_st)
         print("Current state: ", st)
 
         diffCheckpoint = st[DIST_CHECKPOINT] - self.prev_st[DIST_CHECKPOINT]
@@ -108,6 +109,57 @@ class Controller(controller_template.Controller):
         :return: the best weights found by your learning algorithm, after the learning process is over
         """
         raise NotImplementedError("This Method Must Be Implemented")
+
+    # Input initial weights, percentage perturbance
+    # Output better weights
+    def hill_climbing(self, weights, percentage):
+
+        best_score = self.run_episode(weights)
+        best_parameters = weights
+
+        # exhaustively generate neighbors based on input percentage
+        for i, weight in enumerate(weights):
+            for sign in [1, -1]:
+                # neighbor is a small (positive or negative) perturbation in one weight
+                neighbor = list(weights)
+                neighbor[i] += sign * (weight*percentage)
+
+                new_score = self.run_episode(neighbor)
+                if new_score > best_score:
+                    best_score = new_score
+                    best_parameters = neighbor
+
+        return best_parameters
+
+
+    # Covariance Matrix Adaptation Evolution Strategy
+    # Input initial weights
+    # Output better weights
+    def cma_es(self, weights):
+
+        best_score = self.run_episode(weights)
+        best_parameters = weights
+        sample_size = 5
+        neighbors = [] # vai ter sample_size elements
+        new_scores = []
+        # declara uma média e covariância iniciais
+        # média é o best_score dos pesos iniciais?
+        # declara uma Gaussiana multivariada da scipy
+
+        #while ( improving ou iterou demais ):
+            #for i in range(sample_size):
+                #neighbors[i] = sampleia a Gaussiana
+                #new_scores[i] = self.run_episode(neighbors[i])
+
+            # rankeia candidatos por score
+
+            # atualiza a média com todos os vizinhos existentes e os novos
+            # tira os bad e reshape a covariancia?
+            # atualiza parametros de sampling para proxima iteracao
+            # improving = ta melhorando a media? entao roda de novo que ta ficando bom
+
+        return # argsort dos melhores candidatos e pega o parametro do melhor
+
 
     # vou deixar essa Coisa aqui ate achar um jeito pratico de usar
     @property
