@@ -1,0 +1,53 @@
+# -*- org-export-babel-evaluate: nil -*-
+# -*- coding: utf-8 -*-
+# -*- mode: org -*-
+
+#+title: Relatório do 1º trabalho prático
+#+options: toc:nil author:nil
+#+tags: noexport(n) ignore(i)
+#+language: pt-br
+
+#+latex_class: article
+#+latex_class_options: [twocolumn, a4paper]
+
+#+latex_header: \usepackage[margin=1in]{geometry}
+#+latex_header: \usepackage{authblk}
+#+latex_header: \usepackage{titling}
+#+latex_header: \usepackage{palatino}
+#+latex_header: \usepackage{lipsum}
+#+latex_header: \usepackage[brazilian]{babel}
+#+latex_header: \renewcommand\Authands{ e }
+#+latex_header: \author{Felipe Colombelli}
+#+latex_header: \author{Giovanna Lazzari Miotto}
+#+latex_header: \author{Henrique Corrêa Pereira da Silva}
+#+latex_header: \affil[]{Instituto de Informática\\Universidade Federal do Rio Grande do Sul}
+#+latex_header: \affil[]{\normalsize\texttt{\{fcolombelli, glmiotto, hcpsilva\}@inf.ufrgs.br}}
+
+#+latex_header: \setlength{\droptitle}{-1.2cm}
+#+latex_header: \usemintedstyle{manni}
+
+* Resumo                                                             :ignore:
+
+#+begin_abstract
+Isso é um resumo do nosso trabalho
+#+end_abstract
+
+* Sumário                                                            :ignore:
+
+\tableofcontents
+
+* Introdução
+
+\lipsum[1-1]
+
+* Desenvolvimento
+
+** Estratégia de desenvolvimento
+
+** Algoritmos escolhidos
+
+* Resultados
+
+** Visualizações
+
+** Conclusões
