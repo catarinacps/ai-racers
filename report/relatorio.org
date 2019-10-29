@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # -*- mode: org -*-
 
-#+title: Relatório do 1º trabalho prático
+#+title: Relatório do 1º Trabalho Prático
 #+options: toc:nil author:nil
 #+tags: noexport(n) ignore(i)
 #+language: pt-br
@@ -11,17 +11,19 @@
 #+latex_class_options: [twocolumn, a4paper]
 
 #+latex_header: \usepackage[margin=1in]{geometry}
-#+latex_header: \usepackage{authblk}
+#+latex_header: \usepackage[blocks]{authblk}
 #+latex_header: \usepackage{titling}
 #+latex_header: \usepackage{palatino}
 #+latex_header: \usepackage{lipsum}
 #+latex_header: \usepackage[brazilian]{babel}
-#+latex_header: \renewcommand\Authands{ e }
+#+latex_header: \renewcommand\Authsep{\\}
+#+latex_header: \renewcommand\Authand{\\}
+#+latex_header: \renewcommand\Authands{\\}
 #+latex_header: \author{Felipe Colombelli}
 #+latex_header: \author{Giovanna Lazzari Miotto}
 #+latex_header: \author{Henrique Corrêa Pereira da Silva}
-#+latex_header: \affil[]{Instituto de Informática\\Universidade Federal do Rio Grande do Sul}
-#+latex_header: \affil[]{\normalsize\texttt{\{fcolombelli, glmiotto, hcpsilva\}@inf.ufrgs.br}}
+#+latex_header: \affil[1]{Instituto de Informática\\Universidade Federal do Rio Grande do Sul}
+#+latex_header: \affil[ ]{\normalsize\texttt{\{fcolombelli, glmiotto, hcpsilva\}@inf.ufrgs.br}}
 
 #+latex_header: \setlength{\droptitle}{-1.2cm}
 #+latex_header: \usemintedstyle{manni}
@@ -42,11 +44,19 @@ Isso é um resumo do nosso trabalho
 
 * Desenvolvimento
 
+\lipsum[2-2]
+
 ** Estratégia de desenvolvimento
+
+\lipsum[1-1]
 
 ** Algoritmos escolhidos
 
+\lipsum[1-1]
+
 * Resultados
+
+\lipsum[3-3]
 
 ** Visualizações
 
