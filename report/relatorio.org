@@ -31,12 +31,16 @@
 * Resumo                                                             :ignore:
 
 #+begin_abstract
-Isso é um resumo do nosso trabalho
+Neste trabalho nós implementamos e validamos 3 algoritmos de aprendizado de
+máquina que controlam um carro numa corrida, tomando decisões a partir de seus
+sensores ao mundo externo. Nossas implementações foram bem sucedidas, etc
+etc. No melhor caso, o algoritmo etc concluiu seu treinamento em etc e chegou a
+pontuar etc.
 #+end_abstract
 
 * Sumário                                                            :ignore:
 
-\tableofcontents
+#+toc: headlines 5
 
 * Introdução
 
@@ -44,13 +48,47 @@ Isso é um resumo do nosso trabalho
 
 * Desenvolvimento
 
-\lipsum[2-2]
-
-** Estratégia de desenvolvimento
-
-\lipsum[1-1]
+Sendo um trabalho primeiramente de implementação, tentamos colocar em primeiro
+lugar os interesses e curiosidades do grupo na escolha dos algoritmos.
 
 ** Algoritmos escolhidos
+
+Dentre os variados algoritmos que nos foram apresentados tanto em aula quanto
+nas publicações que versam sobre o estado da arte, escolhemos os sequintes:
+
+- CMA-ES
+- Algoritmos Genéticos
+- Hill Climbing
+
+Esse grupo de algoritmos, acreditamos nós, é uma gama que tem tanto abordagens
+clássicas quanto modernas, o que para a comparação futura nos pareceu
+interessante.
+
+*** CMA-ES
+
+Leve preâmbulo de explicação.
+
+Snippet do código.
+
+Comentários sobre a dificuldade de implementação.
+
+*** Algoritmos Genéticos
+
+Leve preâmbulo de explicação.
+
+Snippet do código.
+
+Comentários sobre a dificuldade de implementação.
+
+*** Hill Climbing
+
+Leve preâmbulo de explicação.
+
+Snippet do código.
+
+Comentários sobre a dificuldade de implementação.
+
+** Estratégia de desenvolvimento
 
 \lipsum[1-1]
 
