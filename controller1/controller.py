@@ -45,9 +45,7 @@ class Controller(controller_template.Controller):
         5 - Nothing
         """
 
-        features = self.compute_features(self.sensors)     
-        
-
+        features = self.compute_features(self.sensors)
         actions = []
         par_each_Q = len(parameters) // NUM_OF_ACTIONS
 
@@ -67,7 +65,7 @@ class Controller(controller_template.Controller):
                 )
                 
         
-        best_action = np.argmax(np.array(actions))
+        best_action = np.argmax(np.array(actions)) + 1
         
         return best_action
         
@@ -119,10 +117,15 @@ class Controller(controller_template.Controller):
         :param weights: initial weights of the controller (either loaded from a file or generated randomly)
         :return: the best weights found by your learning algorithm, after the learning process is over
         """
+
+
         print("\n\n############### STARTING TRAINING ###############\n\n")
         best_weights = self.genetic_algorithm(weights)
         print("\n\n############### BEST WEIGHTS ###############n\n")
         print(best_weights)
+        np.savetxt("ga_best_w.txt", np.array(best_weights))
+        return
+
         raise NotImplementedError("This Method Must Be Implemented")
 
     # Input initial weights, percentage perturbance
@@ -243,7 +246,7 @@ class Controller(controller_template.Controller):
 
     def genetic_algorithm(self, weights):
 
-            population_size = 200
+            population_size = 50
             elitism = 0.1
             roulette = 0.1
             mutation_rate = 0.2
@@ -264,6 +267,7 @@ class Controller(controller_template.Controller):
                 print("\n\nGeneration:", generation)
                 print("Best score:", fitness[best_idx])
                 print("\n\n")
+                np.savetxt("best_genetic.txt", best_individual_prev)
 
                 population = self.select_population(population, fitness, elitism, roulette)
                 population = self.cross_population(population, population_size)
