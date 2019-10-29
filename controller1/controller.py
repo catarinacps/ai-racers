@@ -1,5 +1,6 @@
 import controller_template as controller_template
-import numpy
+import numpy as np
+from math import ceil
 
 # Pretend these are constant indexes for sensors[]
 DIST_LEFT = 0
@@ -25,7 +26,7 @@ class Controller(controller_template.Controller):
         self.features = [ 0, 0, 0 ]
         self.num_features = len(self.features)
 
-        weights = numpy.zeros( (self.num_actions, self.num_features) )
+        weights = np.zeros( (self.num_actions, self.num_features) )
 
 
     #######################################################################
@@ -50,7 +51,7 @@ class Controller(controller_template.Controller):
         highest = -1
         #for i in range(self.num_features):
 
-        #     action[i] = numpy.dot(weights[i],features) # falta o peso constante
+        #     action[i] = np.dot(weights[i],features) # falta o peso constante
         #     if action[i] > highest:
         #         highest = action[i]
         #         preference = i
@@ -135,30 +136,94 @@ class Controller(controller_template.Controller):
     # Covariance Matrix Adaptation Evolution Strategy
     # Input initial weights
     # Output better weights
-    def cma_es(self, weights):
+    def cma_es(self, weights, sample_size=5):
 
+        # Algorithm parameters
+        # sample_size: number of randomly generated candidates
+        # weights: current mean around which to generate neighbors
+        best_of = ceil(sample_size / 2)
+        stop_converged = 0.01
+        stop_iter = 10000
+        n_weights = len(weights)
+
+        # Covariance matrix
+        # média é o best_score dos pesos iniciais? errou dá zero pra ela
+        # initial mean: N-dimensional array of current parameters
+        mean = np.asarray(weights)
+        # initial sigma step > 0
+        sigma = 0.5
+        # initial covariance matrix:
+        # NxN-dimensional symmetric matrix with all-positive eigs
+        covariance = np.identity(n_weights)
+        p0 = np.zeros(n_weights)
+        p1 = np.zeros(n_weights)
+        print("Initial mean weights: ")
+        print(mean)
+        print("Initial sigma: ", sigma)
+        print("Initial covariance matrix:")
+        print(sigma ** 2 * covariance)
+        print("Initial paths:")
+        print(p0)
+        print(p1)
+
+        # Neighbor generation
+        neighbors = np.empty([sample_size, n_weights])
+        neighbor_scores = np.empty(sample_size)
         best_score = self.run_episode(weights)
         best_parameters = weights
-        sample_size = 5
-        neighbors = [] # vai ter sample_size elements
-        new_scores = []
-        # declara uma média e covariância iniciais
-        # média é o best_score dos pesos iniciais?
-        # declara uma Gaussiana multivariada da scipy
+        t = True
+        while t:
+            for i in range(sample_size):
+                print("Iter ", i)
+                neighbors[i] = np.random.multivariate_normal(mean, (sigma ** 2) * covariance)
+                print("Sampled: ", neighbors[i])
+                neighbor_scores[i] = self.run_episode(list(neighbors[i]))
+                # np.random.randint(-50, 100)
+                print("Score: ", neighbor_scores[i])
 
-        #while ( improving ou iterou demais ):
-            #for i in range(sample_size):
-                #neighbors[i] = sampleia a Gaussiana
-                #new_scores[i] = self.run_episode(neighbors[i])
+            print("Finished sampling neighbors")
+            print("CANDIDATES: ", neighbors)
+            print("SCORES: ", neighbor_scores)
+            # sort neighbors by descending score
+            order = neighbor_scores.argsort()[::-1]
+            neighbor_scores = neighbor_scores[order]
+            neighbors = neighbors[order]
+            print("ARGSORT: ", order)
+            print("SORTED CANDIDATES: ", neighbors)
+            print("SORTED SCORES: ", neighbor_scores)
+            t = False
 
-            # rankeia candidatos por score
+            # top neighbors
+            neighbors = neighbors[0:best_of]
+            neighbor_scores = neighbor_scores[0:best_of]
+            new_mean = np.mean(neighbors, axis=0, dtype=np.float64)
+            print("New mean (first ", best_of, " neighbors): ")
+            print(new_mean)
 
-            # atualiza a média com todos os vizinhos existentes e os novos
-            # tira os bad e reshape a covariancia?
-            # atualiza parametros de sampling para proxima iteracao
-            # improving = ta melhorando a media? entao roda de novo que ta ficando bom
+            # new covariance
 
-        return # argsort dos melhores candidatos e pega o parametro do melhor
+            cc = np.zeros([n_weights, n_weights])
+            for neighbor in neighbors:
+                print("Neighbor da vez")
+                print(neighbor)
+                print("Neighbor menos mean")
+                print(neighbor - mean)
+                a = neighbor - mean
+                ccc = a.reshape(n_weights, 1) @ a.reshape(1, n_weights)
+                print("Multiply")
+                print(ccc)
+                cc = cc + ccc
+
+            print("New covariance???")
+            cc = np.divide(cc, np.size(neighbors))
+            print(cc)
+
+            # atualiza a média com todos os vizinhos existentes e os novos - ok
+            # tira os bad e reshape a covariancia? - ok maybe
+            # atualiza parametros de sampling para proxima iteracao - nop
+            # improving = ta melhorando a media? entao roda de novo que ta ficando bom - nop
+
+        return  # argsort dos melhores candidatos e pega o parametro do melhor
 
 
     # vou deixar essa Coisa aqui ate achar um jeito pratico de usar
