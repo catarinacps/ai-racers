@@ -12,6 +12,7 @@ SPEED = 5
 DIST_ENEMY = 6
 ENEMY_ANGLE = 7
 ENEMY_NEAR = 8
+NUM_OF_ACTIONS = 5
 
 class Controller(controller_template.Controller):
     def __init__(self, track, evaluate=True, bot_type=None):
@@ -44,23 +45,32 @@ class Controller(controller_template.Controller):
         5 - Nothing
         """
 
-        features = self.compute_features(self.sensors)
-        print("Computed features: ", features)
+        features = self.compute_features(self.sensors)     
+        
 
-        preference = -1
-        highest = -1
-        #for i in range(self.num_features):
+        actions = []
+        par_each_Q = len(parameters) // NUM_OF_ACTIONS
 
-        #     action[i] = np.dot(weights[i],features) # falta o peso constante
-        #     if action[i] > highest:
-        #         highest = action[i]
-        #         preference = i
-        #
-        #
-        # return i + 1
+        weights = np.reshape(np.array(parameters), (NUM_OF_ACTIONS, par_each_Q))
+        
+        if (par_each_Q > self.num_features): # means that the first parameter must be summed up
+                                             # without multiplying
+            for param in weights:
+                actions.append(
+                    param[0] + np.sum(np.array(features) * np.array(param[1:]))
+                )
 
-        # when in doubt respect the speed limit :)
-        return 5
+        else:
+            for param in weights:
+                actions.append(
+                    np.sum(np.array(features) * np.array(param))
+                )
+                
+        
+        best_action = np.argmax(np.array(actions))
+        
+        return best_action
+        
 
     def compute_features(self, st):
         """
@@ -79,8 +89,8 @@ class Controller(controller_template.Controller):
         :return: A list containing the features you defined
         """
 
-        print("Previous state: ", self.prev_st)
-        print("Current state: ", st)
+        #print("Previous state: ", self.prev_st)
+        #print("Current state: ", st)
 
         diffCheckpoint = st[DIST_CHECKPOINT] - self.prev_st[DIST_CHECKPOINT]
         # goal to minimize getting on grass.
@@ -109,6 +119,10 @@ class Controller(controller_template.Controller):
         :param weights: initial weights of the controller (either loaded from a file or generated randomly)
         :return: the best weights found by your learning algorithm, after the learning process is over
         """
+        print("\n\n############### STARTING TRAINING ###############\n\n")
+        best_weights = self.genetic_algorithm(weights)
+        print("\n\n############### BEST WEIGHTS ###############n\n")
+        print(best_weights)
         raise NotImplementedError("This Method Must Be Implemented")
 
     # Input initial weights, percentage perturbance
@@ -292,11 +306,11 @@ class Controller(controller_template.Controller):
     # Input parameters: list of individual solutions
     # Output returned: list of fitness score for each individual
     def compute_fitness(self, population):
-
+        BIG_NUMBER = 1000000
         fitness = []
 
         for individual in population:
-            fitness.append(self.run_episode(individual))
+            fitness.append(self.run_episode(individual) + BIG_NUMBER)
 
         return fitness
 
