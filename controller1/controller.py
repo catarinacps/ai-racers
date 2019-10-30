@@ -122,6 +122,7 @@ class Controller(controller_template.Controller):
         centralizedPosition = centralizedPosition / 99 
 
 
+
         #if (self.game_state.car1.score > self.prev_score)
         # depois vejo como lidar quando cruza checkpoint
         # maximize potential travel distance fulfilled
@@ -291,8 +292,8 @@ class Controller(controller_template.Controller):
             roulette = 0.1
             mutation_rate = 0.2
             max_generations = 500
-            max_same_best = 10
-            perturbation_range = 2 # because weights got big (empirical experimentation)
+            max_same_best = 20
+            perturbation_range = 0.5    # [-0.5,0.5]
 
             population = self.generate_population(weights, population_size)
             fitness = self.compute_fitness(population)
@@ -303,13 +304,19 @@ class Controller(controller_template.Controller):
             best_idx = np.argmax(fitness)
             best_individual_prev = population[best_idx]
 
+            greater_score_found = np.amax(fitness)
+
             while generation <= max_generations:
                 
+                if (fitness[best_idx] > greater_score_found):
+                    greater_score_found = fitness[np.argmax(fitness)]
+                    np.savetxt("best_genetic.txt", best_individual_prev)
+
                 print("\n\nGeneration:", generation)
-                print("Best score:", fitness[best_idx])
+                print("Best population score:", fitness[best_idx])
+                print("Greater score found among generations:", greater_score_found)
                 print("Smallest checkpoint diff:", self.smallest_chkp_diff)
                 print("\n\n")
-                np.savetxt("best_genetic.txt", best_individual_prev)
 
                 population = self.select_population(population, fitness, elitism, roulette)
                 population = self.cross_population(population, population_size)
@@ -446,11 +453,20 @@ class Controller(controller_template.Controller):
     # Output returned: new population
     def mutate_population(self, population, mutation_rate, perturbation_range=0.1):
 
-        mutation = mutation_rate*100
+        mutation_percentage = mutation_rate*100
+        population = self.mutate_per_individual(population, mutation_percentage, perturbation_range)
+        # could be:
+        # population = self.mutate_per_gene(population, mutation_percentage, perturbation_range)
+
+        return population
+
+
+    def mutate_per_individual(self, population, mutation_percentage, perturbation_range=0.1):
+        
         for individual in population:
             rand = np.random.randint(0, 101)
             
-            if self.must_mutate(rand, mutation):
+            if self.must_mutate(rand, mutation_percentage):
                 # Mutate a random number of times, a random number of genes
                 for _ in range(np.random.randint(0, len(individual))):
                     mutation_gene = np.random.randint(0, len(individual))
@@ -460,8 +476,23 @@ class Controller(controller_template.Controller):
         return population
 
 
+    def mutate_per_gene(self, population, mutation_percentage, perturbation_range=0.1):
+
+        for individual in population:
+            for gene in range(len(individual)):
+                rand = np.random.randint(0, 101)
+
+                if self.must_mutate(rand, mutation_percentage):
+                    perturbation = np.random.uniform(low=-perturbation_range, high=perturbation_range)
+                    individual[gene] += perturbation
+
+        return population
+
+
     def must_mutate(self, rand, mutation):
         return rand <= mutation
+    
+
 
 
 
