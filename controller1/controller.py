@@ -23,9 +23,12 @@ class Controller(controller_template.Controller):
         self.prev_st = [0, 0, 0, 0, 0, 0.1, 0, 0, 0]
         self.prev_score = -1000
 
-        # diffCheckpoint, riskHeadCollision, direction_kinda
-        self.features = [1, 0, 0, 0 ]
+        
+        self.features = [1, 0, 0, 0, 0, 0, 0]
         self.num_features = len(self.features)
+
+        # experimental to normalize diff feature
+        self.smallest_chkp_diff = 10000000
 
         weights = np.zeros( (self.num_actions, self.num_features) )
 
@@ -51,18 +54,21 @@ class Controller(controller_template.Controller):
 
         weights = np.reshape(np.array(parameters), (NUM_OF_ACTIONS, par_each_Q))
         
+        '''
         if (par_each_Q > self.num_features): # means that the first parameter must be summed up
                                              # without multiplying
             for param in weights:
                 actions.append(
                     param[0] + np.sum(np.array(features) * np.array(param[1:]))
                 )
-
+        
         else:
-            for param in weights:
-                actions.append(
-                    np.sum(np.array(features) * np.array(param))
-                )
+        '''
+
+        for param in weights:
+            actions.append(
+                np.sum(np.array(features) * np.array(param))
+            )
                 
         
         best_action = np.argmax(np.array(actions)) + 1
@@ -86,14 +92,35 @@ class Controller(controller_template.Controller):
           (see the specification file/manual for more details)
         :return: A list containing the features you defined
         """
-
-        #print("Previous state: ", self.prev_st)
-        #print("Current state: ", st)
+        
 
         diffCheckpoint = st[DIST_CHECKPOINT] - self.prev_st[DIST_CHECKPOINT]
+        diffCheckpoint = diffCheckpoint / 1000
+
+        # experimental
+        if diffCheckpoint < self.smallest_chkp_diff:
+            self.smallest_chkp_diff = diffCheckpoint
+
+
         # goal to minimize getting on grass.
         # if not on track, adds spoiler constant.
-        riskHeadCollision = (1 - st[ON_TRACK])*1000 + (st[SPEED] / st[DIST_CENTER] )
+        riskHeadCollision = (1 - st[ON_TRACK])*200 + (st[SPEED] / st[DIST_CENTER])
+        # max value: 200 + 10/1 = 210
+        # min value: 0 + 10/100 = 1/10 = 0.1
+        riskHeadCollision = (riskHeadCollision - 0.1) / 209.9   #normalized
+
+        riskLeftCollision = (1 - st[ON_TRACK])*200 + (st[SPEED] / st[DIST_LEFT])
+        riskLeftCollision = (riskLeftCollision - 0.1) / 209.9 
+        
+        riskRightCollision = (1 - st[ON_TRACK])*200 + (st[SPEED] / st[DIST_RIGHT])
+        riskRightCollision = (riskRightCollision - 0.1) / 209.9 
+
+
+        centralizedPosition = (abs(st[DIST_LEFT] - st[DIST_RIGHT]) * -1) + 99
+        # max: 0 * -1 + 99 = 99
+        # min: |100 - 1| * -1 + 99 = 0
+        centralizedPosition = centralizedPosition / 99 
+
 
         #if (self.game_state.car1.score > self.prev_score)
         # depois vejo como lidar quando cruza checkpoint
@@ -106,7 +133,8 @@ class Controller(controller_template.Controller):
         direction_kinda = -diffCheckpoint/maxTravel
 
         self.prev_st = st
-        return [1, diffCheckpoint, riskHeadCollision, direction_kinda]
+        return [1, diffCheckpoint, riskHeadCollision, riskLeftCollision, 
+        riskRightCollision, direction_kinda, centralizedPosition]
 
 
     def learn(self, weights) -> list:
@@ -147,7 +175,7 @@ class Controller(controller_template.Controller):
                     best_score = new_score
                     best_parameters = neighbor
 
-        return best_parameters
+        return np.array(best_parameters)
 
 
     # Covariance Matrix Adaptation Evolution Strategy
@@ -258,14 +286,15 @@ class Controller(controller_template.Controller):
 
     def genetic_algorithm(self, weights):
 
-            population_size = 50
+            population_size = 100
             elitism = 0.1
             roulette = 0.1
             mutation_rate = 0.2
             max_generations = 500
             max_same_best = 10
+            perturbation_range = 2 # because weights got big (empirical experimentation)
 
-            population = self.generate_population(len(weights), population_size)
+            population = self.generate_population(weights, population_size)
             fitness = self.compute_fitness(population)
 
             generation = 1
@@ -278,6 +307,7 @@ class Controller(controller_template.Controller):
                 
                 print("\n\nGeneration:", generation)
                 print("Best score:", fitness[best_idx])
+                print("Smallest checkpoint diff:", self.smallest_chkp_diff)
                 print("\n\n")
                 np.savetxt("best_genetic.txt", best_individual_prev)
 
@@ -308,14 +338,16 @@ class Controller(controller_template.Controller):
 
     # Input parameters: list size of the current weights; number of individuals to be generated
     # Output returned: new set of weights
-    def generate_population(self, weights_len, population_size):
+    def generate_population(self, weights, population_size):
+        
+        population = [weights]
 
-        population = []
-
-        for i in range(population_size):
+        for i in range(population_size-1):
             population.append(
-                np.random.uniform(low=-1.0, high=1.0, size=weights_len)
+                #np.random.uniform(low=np.amin(weights), high=np.amax(weights), size=len(weights))
+                np.random.uniform(low=-1.0, high=1.0, size=len(weights))
             )
+
         return population
 
 
@@ -335,36 +367,43 @@ class Controller(controller_template.Controller):
     # Output returned: selected individuals
     def select_population(self, population, fitness, elitism, roulette):
 
-        num_from_elite = round(elitism * len(population))
-        num_from_roulette = round(roulette * len(population))
         
         fitness = np.array(fitness)
         population = np.array(population)
 
-        # Get the index of the N greatest scores
-        elite_idx = np.argpartition(fitness, -num_from_elite)[-num_from_elite:]
-        elite = population[elite_idx]
+        elite = []
+        if (elitism != 0):
+
+            num_from_elite = round(elitism * len(population))
+            elite_idx = np.argpartition(fitness, -num_from_elite)[-num_from_elite:] # Get the index of the N greatest scores
+            elite = population[elite_idx]
+
+            # Delete the already selected individuals by the elitism method
+            population = np.delete(population, elite_idx, axis=0)
+            fitness = np.delete(fitness, elite_idx, axis=0)
         
-        # Delete the already selected individuals by the elitism method
-        population = np.delete(population, elite_idx, axis=0)
-        fitness = np.delete(fitness, elite_idx, axis=0)
-
-        # Select the next fraction by the roulette method
+        
+        
         drawn_from_roulette = []
-        s = np.sum(fitness)
+        if (roulette != 0):
+            # Select the next fraction by the roulette method
+            num_from_roulette = round(roulette * len(population))
+            s = np.sum(fitness)
 
-        for _ in range(num_from_roulette):
-            r = np.random.randint(0,s)
-            t = 0
-            for i, score in enumerate(fitness):
-                t = t + score
-                if (t >= r):
-                    drawn_from_roulette.append(population[i])   # get rouletted individual
-                    population = np.delete(population, i, axis=0)   # can't be chosen more than once
-                    fitness = np.delete(fitness, i, axis=0)   # can't be chosen more than once
-                    break
+            for _ in range(num_from_roulette):
+                r = np.random.randint(0,s)
+                t = 0
+                for i, score in enumerate(fitness):
+                    t = t + score
+                    if (t >= r):
+                        drawn_from_roulette.append(population[i])   # get rouletted individual
+                        population = np.delete(population, i, axis=0)   # can't be chosen more than once
+                        fitness = np.delete(fitness, i, axis=0)   # can't be chosen more than once
+                        break
 
-        drawn_from_roulette = np.array(drawn_from_roulette)
+            drawn_from_roulette = np.array(drawn_from_roulette)
+        
+
         selected_population = np.append(elite, drawn_from_roulette, axis=0)
 
         return selected_population
