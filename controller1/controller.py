@@ -24,7 +24,7 @@ class Controller(controller_template.Controller):
         self.prev_st = [0, 0, 0, 0, 0, 0.1, 0, 0, 0]
         self.prev_score = -1000
 
-        
+
         self.features = [1, 0, 0, 0, 0, 0]
         self.num_features = len(self.features)
 
@@ -50,18 +50,18 @@ class Controller(controller_template.Controller):
         par_each_Q = len(parameters) // NUM_OF_ACTIONS
 
         weights = np.reshape(np.array(parameters), (NUM_OF_ACTIONS, par_each_Q))
-        
+
 
         for param in weights:
             actions.append(
                 np.sum(np.array(features) * np.array(param))
             )
-                
-        
+
+
         best_action = np.argmax(np.array(actions)) + 1
-        
+
         return best_action
-        
+
 
     def compute_features(self, st):
         """
@@ -79,7 +79,7 @@ class Controller(controller_template.Controller):
           (see the specification file/manual for more details)
         :return: A list containing the features you defined
         """
-        
+
 
         diffCheckpoint = st[DIST_CHECKPOINT] - self.prev_st[DIST_CHECKPOINT]
         diffCheckpoint = diffCheckpoint*2 / 1000
@@ -97,16 +97,16 @@ class Controller(controller_template.Controller):
         riskHeadCollision = (riskHeadCollision - 0.1) / 209.9   #normalized
 
         riskLeftCollision = (1 - st[ON_TRACK])*200 + (st[SPEED] / st[DIST_LEFT])
-        riskLeftCollision = (riskLeftCollision - 0.1) / 209.9 
-        
+        riskLeftCollision = (riskLeftCollision - 0.1) / 209.9
+
         riskRightCollision = (1 - st[ON_TRACK])*200 + (st[SPEED] / st[DIST_RIGHT])
-        riskRightCollision = (riskRightCollision - 0.1) / 209.9 
+        riskRightCollision = (riskRightCollision - 0.1) / 209.9
 
 
         centralizedPosition = (abs(st[DIST_LEFT] - st[DIST_RIGHT]) * -1) + 99
         # max: 0 * -1 + 99 = 99
         # min: |100 - 1| * -1 + 99 = 0
-        centralizedPosition = centralizedPosition / 99 
+        centralizedPosition = centralizedPosition / 99
 
 
 
@@ -121,7 +121,7 @@ class Controller(controller_template.Controller):
         #direction_kinda = -diffCheckpoint/maxTravel
 
         self.prev_st = st
-        return [1, diffCheckpoint, riskHeadCollision, riskLeftCollision, 
+        return [1, diffCheckpoint, riskHeadCollision, riskLeftCollision,
         riskRightCollision, centralizedPosition]
 
 
@@ -141,143 +141,6 @@ class Controller(controller_template.Controller):
         print(best_weights)
         np.savetxt("ga_best_w.txt", np.array(best_weights))
         return
-
-        #raise NotImplementedError("This Method Must Be Implemented")
-
-    # Input initial weights, percentage perturbance
-    # Output better weights
-    def hill_climbing(self, weights, percentage):
-
-        best_score = self.run_episode(weights)
-        best_parameters = weights
-
-        # exhaustively generate neighbors based on input percentage
-        for i, weight in enumerate(weights):
-            for sign in [1, -1]:
-                # neighbor is a small (positive or negative) perturbation in one weight
-                neighbor = list(weights)
-                neighbor[i] += sign * (weight*percentage)
-
-                new_score = self.run_episode(neighbor)
-                if new_score > best_score:
-                    best_score = new_score
-                    best_parameters = neighbor
-
-        return np.array(best_parameters)
-
-
-    # Covariance Matrix Adaptation Evolution Strategy
-    # Input initial weights
-    # Output better weights
-    def cma_es(self, weights, sample_size=5):
-
-        # Algorithm parameters
-        # sample_size: number of randomly generated candidates
-        # weights: current mean around which to generate neighbors
-        best_of = ceil(sample_size / 2)
-        convergence_delta = 0.01
-        min_iter = 10
-        max_iter = 50
-        n_weights = len(weights)
-
-        # Covariance matrix
-        # média é o best_score dos pesos iniciais? errou dá zero pra ela
-        # initial mean: N-dimensional array of current parameters
-        mean = np.asarray(weights)
-        # initial sigma step > 0
-        sigma = 0.5
-        # initial covariance matrix:
-        # NxN-dimensional symmetric matrix with all-positive eigs
-        covariance = np.identity(n_weights)
-        p0 = np.zeros(n_weights)
-        p1 = np.zeros(n_weights)
-        print("Initial mean weights: ")
-        print(mean)
-        print("Initial sigma: ", sigma)
-        print("Initial covariance matrix:")
-        print(sigma ** 2 * covariance)
-        # print("Initial paths:")
-        # print(p0)
-        # print(p1)
-
-        # Neighbor generation
-        neighbors = np.empty([sample_size, n_weights])
-        neighbor_scores = np.empty(sample_size)
-        best_score = self.run_episode(weights)
-        best_parameters = weights
-        iter = 0
-        improvement = 1
-        while (iter < max_iter) or (improvement > convergence_delta):
-            iter += 1
-            print("Iteration ", iter, ":")
-
-            for i in range(sample_size):
-                # print("Sample ", i)
-                neighbors[i] = np.random.multivariate_normal(mean, (sigma ** 2) * covariance)
-                # print("Sampled: ", neighbors[i])
-                neighbor_scores[i] = self.run_episode(list(neighbors[i]))
-                # np.random.randint(-50, 100)
-                # print("Score: ", neighbor_scores[i])
-
-            # print("Finished sampling neighbors")
-            # print("CANDIDATES: ", neighbors)
-            # print("SCORES: ", neighbor_scores)
-            # sort neighbors by descending score
-            order = neighbor_scores.argsort()[::-1]
-            neighbor_scores = neighbor_scores[order]
-            neighbors = neighbors[order]
-            # print("ARGSORT: ", order)
-            # print("SORTED CANDIDATES: ", neighbors)
-            # print("SORTED SCORES: ", neighbor_scores)
-            # top neighbors
-            best_neighbors = neighbors[0:best_of]
-            best_neighbor_scores = neighbor_scores[0:best_of]
-
-            # new covariance
-
-            cc = np.zeros([n_weights, n_weights])
-            for neighbor in best_neighbors:
-                # print("Neighbor da vez")
-                # print(neighbor)
-                # print("Neighbor menos mean")
-                # print(neighbor - mean)
-                a = neighbor - mean
-                ccc = a.reshape(n_weights, 1) @ a.reshape(1, n_weights)
-                # print("Multiply")
-                # print(ccc)
-                cc = cc + ccc
-
-            # print("New covariance???")
-            cc = np.divide(cc, np.size(best_neighbors))
-            # print(cc)
-
-            new_mean = np.mean(best_neighbors, axis=0, dtype=np.float64)
-            # print("New mean (first ", best_of, " neighbors): ")
-            # print(new_mean)
-            mean = new_mean
-
-            # atualiza a média com todos os vizinhos existentes e os novos - ok
-            # tira os bad e reshape a covariancia? - ok maybe
-            # atualiza parametros de sampling para proxima iteracao - nao sei
-            # improving = ta melhorando a media? entao roda de novo que ta ficando bom - ok
-            improvement = best_neighbor_scores[0] - best_score
-
-            if best_score < best_neighbor_scores[0]:
-                best_score = best_neighbor_scores[0]
-                best_parameters = list(best_neighbors[0])
-                print("New best score: ", best_score)
-                print("New best candidate")
-                print(best_parameters)
-                print("Improvement: ", improvement)
-
-        return list(best_parameters)
-
-
-
-
-
-
-
 
     def genetic_algorithm(self, weights):
 
@@ -301,7 +164,7 @@ class Controller(controller_template.Controller):
             greater_score_found = np.amax(fitness)
 
             while generation <= max_generations:
-                
+
                 if (fitness[best_idx] > greater_score_found):
                     greater_score_found = fitness[np.argmax(fitness)]
                     np.savetxt("best_genetic.txt", best_individual_prev)
@@ -310,7 +173,7 @@ class Controller(controller_template.Controller):
                 print("Best population score:", fitness[best_idx])
                 print("Greater score found among generations:", greater_score_found)
                 print("\n\n")
-                
+
 
                 population = self.select_population(population, fitness, elitism, roulette)
                 population = self.cross_population(population, population_size, mutation_rate, perturbation_range)
@@ -340,7 +203,7 @@ class Controller(controller_template.Controller):
     # Input parameters: list size of the current weights; number of individuals to be generated
     # Output returned: new set of weights
     def generate_population(self, weights, population_size):
-        
+
         population = [weights]
 
         for i in range(population_size-1):
@@ -355,7 +218,7 @@ class Controller(controller_template.Controller):
     # Input parameters: list of individual solutions
     # Output returned: list of fitness score for each individual
     def compute_fitness(self, population):
-        
+
         fitness = []
 
         for individual in population:
@@ -381,8 +244,8 @@ class Controller(controller_template.Controller):
             # Delete the already selected individuals by the elitism method
             population = np.delete(population, elite_idx, axis=0)
             fitness = np.delete(fitness, elite_idx, axis=0)
-        
-          
+
+
         drawn_from_roulette = []
         if (roulette != 0):
             # Select the next fraction by the roulette method
@@ -401,7 +264,7 @@ class Controller(controller_template.Controller):
                         break
 
             drawn_from_roulette = np.array(drawn_from_roulette)
-        
+
 
         selected_population = np.append(elite, drawn_from_roulette, axis=0)
         return selected_population
@@ -416,7 +279,7 @@ class Controller(controller_template.Controller):
         num_missing_individuals = population_size - len(population)
 
         mask = np.random.randint(0, 2, size=population.shape[1])
-        # mask example for a problem with 5 weights [0,1,1,0,1] 
+        # mask example for a problem with 5 weights [0,1,1,0,1]
         # Note that, here, each weight is the gene of the chromossome (instead of bits)
 
         for _ in range(num_missing_individuals):
@@ -431,7 +294,7 @@ class Controller(controller_template.Controller):
                     son.append(dad1[i])
                 else:
                     son.append(dad2[i])
-            
+
             son = np.array(son)
             missing_population.append(son)
 
@@ -453,10 +316,10 @@ class Controller(controller_template.Controller):
 
 
     def mutate_per_individual(self, population, mutation_percentage, perturbation_range=0.1):
-        
+
         for individual in population:
             rand = np.random.randint(0, 101)
-            
+
             if self.must_mutate(rand, mutation_percentage):
                 # Mutate a random number of times, a random number of genes
                 for _ in range(np.random.randint(0, len(individual))):
@@ -482,10 +345,6 @@ class Controller(controller_template.Controller):
 
     def must_mutate(self, rand, mutation):
         return rand <= mutation
-    
-
-
-
 
 
     # vou deixar essa Coisa aqui ate achar um jeito pratico de usar
@@ -527,27 +386,35 @@ class Controller(controller_template.Controller):
     @distLeft.setter
     def distLeft(self, val):
         self.sensors[0] = val
+
     @distCenter.setter
     def distCenter(self, val):
         self.sensors[1] = val
+
     @distRight.setter
     def distRight(self, val):
         self.sensors[2] = val
+
     @onTrack.setter
     def onTrack(self, val):
         self.sensors[3] = val
+
     @distCheckpoint.setter
     def distCheckpoint(self, val):
         self.sensors[4] = val
+
     @speed.setter
     def speed(self, val):
         self.sensors[5] = val
+
     @distEnemy.setter
     def distEnemy(self, val):
         self.sensors[6] = val
+
     @enemyAngle.setter
     def enemyAngle(self, val):
         self.sensors[7] = val
+
     @enemyNearby.setter
     def enemyNearby(self, val):
         self.sensors[8] = val
