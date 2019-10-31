@@ -8,6 +8,8 @@
 #BATCH --mail-type=END,FAIL
 #BATCH --mail-user=hcpsilva@inf.ufrgs.br
 
+set -euo pipefail
+
 # machine:
 MACHINE=${SLURMD_HOSTNAME}_${SLURM_CPUS_ON_NODE}
 
