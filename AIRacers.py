@@ -14,8 +14,10 @@ import time
 import numpy
 import pygame
 import simulator
-from controller1.controller import Controller
+from controller1.controller import Controller as Controller1
 from controller2.controller import Controller as Controller2
+# from controller3.controller import Controller as Controller3
+# from controller4.controller import Controller as Controller4
 import tracks_config as track
 
 
@@ -29,7 +31,7 @@ def play(track_name: str, b_type: str) -> None:
     :param str b_type: String
     :rtype: None
     """
-    play_controller = Controller(track_name, bot_type=b_type)
+    play_controller = Controller1(track_name, bot_type=b_type)
     game_state = play_controller.game_state
     play_controller.sensors = [53, 66, 100, 1, 172.1353274581511, 150, -1, 0, 0]
     while True:
@@ -87,6 +89,8 @@ def parser() -> (argparse.Namespace, list):
     p.add_argument('-t', nargs=1,
                    help='Specifies the track you want to select; by default, track1 will be used. '
                         'Check the \'tracks.py\' file to see the available tracks/create new ones.\n')
+    p.add_argument('-c', nargs=1, choices=['1', '2', '3', '4'],
+                   help='Selects controller\n')
     mode_p.add_parser('learn',
                       help='Starts %(prog)s in learning mode. This mode does not render the game to your screen, '
                            'resulting in '
@@ -118,7 +122,7 @@ def comp(a_track: 'Track',weights_1: numpy.ndarray, weights_2: numpy.ndarray, ca
 
     :return: None
     """
-    ctrl1 = Controller(chosen_track, evaluate=False)
+    ctrl1 = Controller1(chosen_track, evaluate=False)
     ctrl2 = Controller2(chosen_track, evaluate=False)
 
     simulator.evaluate = True
@@ -166,9 +170,13 @@ if __name__ == '__main__':
             if args.t[0] == a_track.name:
                 chosen_track = a_track
 
+    chosen_controller = '1'
+    if args.c is not None:
+        chosen_controller = args.c[0]
+
     # Sets weights
     if args.w is None:
-        ctrl_temp = Controller(chosen_track, bot_type=None, evaluate=False)
+        ctrl_temp = Controller1(chosen_track, bot_type=None, evaluate=False)
         fake_sensors = [53, 66, 100, 1, 172.1353274581511, 150, -1, 0, 0]
         features_len = len(ctrl_temp.compute_features(fake_sensors))
         weights = [random.uniform(-1, 1) for i in range(0, features_len * 5)]
@@ -184,23 +192,31 @@ if __name__ == '__main__':
     else:
         bot_type = args.b[0]
 
+    if chosen_controller == '1':
+        cntr_cons = Controller1
+    elif chosen_controller == '2':
+        cntr_cons = Controller2
+    elif chosen_controller == '3':
+        cntr_cons = Controller3
+    elif chosen_controller == '4':
+        cntr_cons = Controller4
+
     # Starts simulator in play mode
     if str(args.mode) == 'play':
         play(chosen_track, bot_type)
     # Starts simulator in evaluate mode
     elif str(args.mode) == 'evaluate':
-        ctrl = Controller(chosen_track, bot_type=bot_type)
+        ctrl = cntr_cons(chosen_track, bot_type=bot_type)
         score = ctrl.run_episode(weights)
     # Starts simulator in learn mode and saves the best results in a file
     elif str(args.mode) == 'learn':
-        ctrl = Controller(chosen_track, evaluate=False, bot_type=bot_type)
+        ctrl = cntr_cons(chosen_track, evaluate=False, bot_type=bot_type)
         result = ctrl.learn(weights)
         if not os.path.exists("./params"):
             os.makedirs("./params")
         output = "./params/%s.txt" % datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%d%H%M%S')
         print(output)
         numpy.savetxt(output, result)
-
     elif str(args.mode) == 'comp':
         w_ctrl1 = numpy.loadtxt('controller1/weights.txt')
         w_ctrl2 = numpy.loadtxt('controller2/weights.txt')
