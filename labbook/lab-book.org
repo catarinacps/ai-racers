@@ -7,6 +7,17 @@
 
 Esse dia eventualmente ia chegar, né
 
+*Afazeres*:
+
+- [X] adicionar novos parametros
+- [X] achar modo de salvar estado (edit: pickle!)
+- [X] fazer script dos experimentos
+- [ ] salvar estado
+  - [ ] do controlador 1
+  - [ ] do controlador 2
+  - [ ] do controlador 3
+  - [ ] do controlador 4
+
 * Experimentos
 
 Aqui ficarão coisas relacionadas aos experimentos
