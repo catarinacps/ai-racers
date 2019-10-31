@@ -13,6 +13,7 @@ DIST_ENEMY = 6
 ENEMY_ANGLE = 7
 ENEMY_NEAR = 8
 NUM_OF_ACTIONS = 5
+BIG_NUMBER = 1000000
 
 class Controller(controller_template.Controller):
     def __init__(self, track, evaluate=True, bot_type=None):
@@ -24,13 +25,9 @@ class Controller(controller_template.Controller):
         self.prev_score = -1000
 
         
-        self.features = [1, 0, 0, 0, 0, 0, 0]
+        self.features = [1, 0, 0, 0, 0, 0]
         self.num_features = len(self.features)
 
-        # experimental to normalize diff feature
-        self.smallest_chkp_diff = 10000000
-
-        weights = np.zeros( (self.num_actions, self.num_features) )
 
 
     #######################################################################
@@ -54,16 +51,6 @@ class Controller(controller_template.Controller):
 
         weights = np.reshape(np.array(parameters), (NUM_OF_ACTIONS, par_each_Q))
         
-        '''
-        if (par_each_Q > self.num_features): # means that the first parameter must be summed up
-                                             # without multiplying
-            for param in weights:
-                actions.append(
-                    param[0] + np.sum(np.array(features) * np.array(param[1:]))
-                )
-        
-        else:
-        '''
 
         for param in weights:
             actions.append(
@@ -95,16 +82,16 @@ class Controller(controller_template.Controller):
         
 
         diffCheckpoint = st[DIST_CHECKPOINT] - self.prev_st[DIST_CHECKPOINT]
-        diffCheckpoint = diffCheckpoint / 1000
-
-        # experimental
-        if diffCheckpoint < self.smallest_chkp_diff:
-            self.smallest_chkp_diff = diffCheckpoint
-
+        diffCheckpoint = diffCheckpoint*2 / 1000
+        # times 2 cause it is double important
 
         # goal to minimize getting on grass.
         # if not on track, adds spoiler constant.
-        riskHeadCollision = (1 - st[ON_TRACK])*200 + (st[SPEED] / st[DIST_CENTER])
+        riskHeadCollision = (1 - st[ON_TRACK])*250 + (st[SPEED] / st[DIST_CENTER])*1.5
+        # 250 and not 200 to say that head collision is worse than right/left
+        # the same logic goes to the "1.5"
+
+        # without considering the constants multiplication:
         # max value: 200 + 10/1 = 210
         # min value: 0 + 10/100 = 1/10 = 0.1
         riskHeadCollision = (riskHeadCollision - 0.1) / 209.9   #normalized
@@ -130,12 +117,12 @@ class Controller(controller_template.Controller):
         # if distance to checkpoint reduced by a similar amount,
         # then the car is going straight to target and ratio == 1.0
         # opposite direction: ratio -1.0
-        maxTravel = st[SPEED]/10
-        direction_kinda = -diffCheckpoint/maxTravel
+        #maxTravel = st[SPEED]/10
+        #direction_kinda = -diffCheckpoint/maxTravel
 
         self.prev_st = st
         return [1, diffCheckpoint, riskHeadCollision, riskLeftCollision, 
-        riskRightCollision, direction_kinda, centralizedPosition]
+        riskRightCollision, centralizedPosition]
 
 
     def learn(self, weights) -> list:
@@ -285,14 +272,21 @@ class Controller(controller_template.Controller):
 
         return list(best_parameters)
 
+
+
+
+
+
+
+
     def genetic_algorithm(self, weights):
 
-            population_size = 100
-            elitism = 0.1
+            population_size = 150
+            elitism = 0.15
             roulette = 0.1
             mutation_rate = 0.2
             max_generations = 500
-            max_same_best = 20
+            max_same_best = 10
             perturbation_range = 0.5    # [-0.5,0.5]
 
             population = self.generate_population(weights, population_size)
@@ -315,17 +309,17 @@ class Controller(controller_template.Controller):
                 print("\n\nGeneration:", generation)
                 print("Best population score:", fitness[best_idx])
                 print("Greater score found among generations:", greater_score_found)
-                print("Smallest checkpoint diff:", self.smallest_chkp_diff)
                 print("\n\n")
+                
 
                 population = self.select_population(population, fitness, elitism, roulette)
-                population = self.cross_population(population, population_size)
-                population = self.mutate_population(population, mutation_rate)
+                population = self.cross_population(population, population_size, mutation_rate, perturbation_range)
                 fitness = self.compute_fitness(population)
                 generation += 1
 
                 best_idx = np.argmax(fitness)
                 best_individual = population[best_idx]
+
 
                 if (np.array_equal(best_individual, best_individual_prev)):
                     same_best += 1
@@ -361,7 +355,7 @@ class Controller(controller_template.Controller):
     # Input parameters: list of individual solutions
     # Output returned: list of fitness score for each individual
     def compute_fitness(self, population):
-        BIG_NUMBER = 1000000
+        
         fitness = []
 
         for individual in population:
@@ -374,7 +368,6 @@ class Controller(controller_template.Controller):
     # Output returned: selected individuals
     def select_population(self, population, fitness, elitism, roulette):
 
-        
         fitness = np.array(fitness)
         population = np.array(population)
 
@@ -389,8 +382,7 @@ class Controller(controller_template.Controller):
             population = np.delete(population, elite_idx, axis=0)
             fitness = np.delete(fitness, elite_idx, axis=0)
         
-        
-        
+          
         drawn_from_roulette = []
         if (roulette != 0):
             # Select the next fraction by the roulette method
@@ -412,14 +404,13 @@ class Controller(controller_template.Controller):
         
 
         selected_population = np.append(elite, drawn_from_roulette, axis=0)
-
         return selected_population
 
 
     # Crossover method used: uniform crossover with random crossover mask
     # Input parameters: list of individual solutions; list of maximum individuals
     # Output returned: new population
-    def cross_population(self, population, population_size):
+    def cross_population(self, population, population_size, mutation_rate, perturbation_range):
 
         missing_population = []
         num_missing_individuals = population_size - len(population)
@@ -445,6 +436,7 @@ class Controller(controller_template.Controller):
             missing_population.append(son)
 
         missing_population = np.array(missing_population)
+        missing_population = self.mutate_population(missing_population, mutation_rate, perturbation_range)
         new_population = np.append(population, missing_population, axis=0)
         return new_population
 
@@ -454,9 +446,8 @@ class Controller(controller_template.Controller):
     def mutate_population(self, population, mutation_rate, perturbation_range=0.1):
 
         mutation_percentage = mutation_rate*100
-        population = self.mutate_per_individual(population, mutation_percentage, perturbation_range)
-        # could be:
-        # population = self.mutate_per_gene(population, mutation_percentage, perturbation_range)
+        #population = self.mutate_per_individual(population, mutation_percentage, perturbation_range)
+        population = self.mutate_per_gene(population, mutation_percentage, perturbation_range)
 
         return population
 
