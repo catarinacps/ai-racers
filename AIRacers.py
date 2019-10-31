@@ -16,7 +16,7 @@ import pygame
 import simulator
 from controller1.controller import Controller as Controller1
 from controller2.controller import Controller as Controller2
-# from controller3.controller import Controller as Controller3
+from controller3.controller import Controller as Controller3
 # from controller4.controller import Controller as Controller4
 import tracks_config as track
 
@@ -86,6 +86,8 @@ def parser() -> (argparse.Namespace, list):
                         'generated.\n')
     p.add_argument('-b', nargs=1, choices=['parked_bots', 'dumb_bot', 'safe_bot', 'ninja_bot', 'custom_bot', 'none'],
                    help='Selects bot type')
+    p.add_argument('-a', nargs=2,
+                   help='Give learning arguments\n')
     p.add_argument('-t', nargs=1,
                    help='Specifies the track you want to select; by default, track1 will be used. '
                         'Check the \'tracks.py\' file to see the available tracks/create new ones.\n')
@@ -211,7 +213,7 @@ if __name__ == '__main__':
     # Starts simulator in learn mode and saves the best results in a file
     elif str(args.mode) == 'learn':
         ctrl = cntr_cons(chosen_track, evaluate=False, bot_type=bot_type)
-        result = ctrl.learn(weights)
+        result = ctrl.learn(weights, args.a)
         if not os.path.exists("./params"):
             os.makedirs("./params")
         output = "./params/%s.txt" % datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%d%H%M%S')

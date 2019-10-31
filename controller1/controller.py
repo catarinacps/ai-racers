@@ -125,7 +125,7 @@ class Controller(controller_template.Controller):
         riskRightCollision, centralizedPosition]
 
 
-    def learn(self, weights) -> list:
+    def learn(self, weights, args = None) -> list:
         """
         IMPLEMENT YOUR LEARNING METHOD (i.e. YOUR LOCAL SEARCH ALGORITHM) HERE
 
@@ -136,16 +136,17 @@ class Controller(controller_template.Controller):
 
 
         print("\n\n############### STARTING TRAINING ###############\n\n")
-        best_weights = self.genetic_algorithm(weights)
+        if args is not None:
+            best_weights = self.genetic_algorithm(weights, args[0], args[1])
+        else:
+            best_weights = self.genetic_algorithm(weights)
         print("\n\n############### BEST WEIGHTS ###############n\n")
         print(best_weights)
         np.savetxt("ga_best_w.txt", np.array(best_weights))
         return
 
-    def genetic_algorithm(self, weights):
+    def genetic_algorithm(self, weights, population_size = 150, eletism = 0.15):
 
-            population_size = 150
-            elitism = 0.15
             roulette = 0.1
             mutation_rate = 0.2
             max_generations = 500

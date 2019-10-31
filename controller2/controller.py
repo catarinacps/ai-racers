@@ -125,7 +125,7 @@ class Controller(controller_template.Controller):
         riskRightCollision, centralizedPosition]
 
 
-    def learn(self, weights) -> list:
+    def learn(self, weights, args = None) -> list:
         """
         IMPLEMENT YOUR LEARNING METHOD (i.e. YOUR LOCAL SEARCH ALGORITHM) HERE
 
@@ -136,7 +136,10 @@ class Controller(controller_template.Controller):
 
 
         print("\n\n############### STARTING TRAINING ###############\n\n")
-        best_weights = self.cma_es(weights)
+        if args is not None:
+            best_weights = self.cma_es(weights, args[0], args[1])
+        else:
+            best_weights = self.cma_es(weights)
         print("\n\n############### BEST WEIGHTS ###############n\n")
         print(best_weights)
         np.savetxt("cmaes_best_w.txt", np.array(best_weights))
@@ -148,12 +151,12 @@ class Controller(controller_template.Controller):
     # Covariance Matrix Adaptation Evolution Strategy
     # Input initial weights
     # Output better weights
-    def cma_es(self, weights, sample_size=5):
+    def cma_es(self, weights, sample_size = 5, top_percentage = 0.5):
 
         # Algorithm parameters
         # sample_size: number of randomly generated candidates
         # weights: current mean around which to generate neighbors
-        best_of = ceil(sample_size / 2)
+        best_of = ceil(sample_size * top_percentage)
         convergence_delta = 0.01
         min_iter = 10
         max_iter = 50

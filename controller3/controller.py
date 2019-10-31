@@ -125,7 +125,7 @@ class Controller(controller_template.Controller):
         riskRightCollision, centralizedPosition]
 
 
-    def learn(self, weights) -> list:
+    def learn(self, weights, args = None) -> list:
         """
         IMPLEMENT YOUR LEARNING METHOD (i.e. YOUR LOCAL SEARCH ALGORITHM) HERE
 
@@ -136,7 +136,10 @@ class Controller(controller_template.Controller):
 
 
         print("\n\n############### STARTING TRAINING ###############\n\n")
-        best_weights = self.hill_climbing(weights)
+        if args is not None:
+            best_weights = self.hill_climbing(weights, args[0], args[1])
+        else:
+            best_weights = self.hill_climbing(weights)
         print("\n\n############### BEST WEIGHTS ###############n\n")
         print(best_weights)
         np.savetxt("ga_best_w.txt", np.array(best_weights))
@@ -146,7 +149,8 @@ class Controller(controller_template.Controller):
 
     # Input initial weights, percentage perturbance
     # Output better weights
-    def hill_climbing(self, weights, percentage = 0.5):
+    def hill_climbing(self, weights, num_neighbors = 8, dummy_param = 0, percentage = 0.5):
+        #TODO: change the way we get neighbors!
 
         best_score = self.run_episode(weights)
         best_parameters = weights

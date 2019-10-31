@@ -1,0 +1,165 @@
+#+title: Lab-book do henrique
+#+author: Henrique Silva
+#+email: hcpsilva@inf.ufrgs.br
+#+infojs_opt:
+#+property: session *R*
+#+property: cache yes
+
+Esse dia eventualmente ia chegar, né
+
+* Experimentos
+
+Aqui ficarão coisas relacionadas aos experimentos
+
+#+begin_src R :session :results none
+library(DoE.base)
+library(tidyverse)
+options(crayon.enabled=FALSE)
+#+end_src
+
+** Design
+
+A seed randômica é:
+
+#+begin_src R :session :results value :exports results
+floor(runif(1,1,99999))
+#+end_src
+
+#+RESULTS:
+: 46958
+
+Para cada sessão de treinamento:
+
+#+begin_src R :session :results output :exports both
+bot = c('parked_bots', 'dumb_bot', 'safe_bot', 'ninja_bot')
+pista = c('track1', 'baby_park', 'interlagos', 'many_forks')
+
+fac.design(
+    nfactors=2,
+    replications=1,
+    repeat.only=FALSE,
+    blocks=1,
+    randomize=TRUE,
+    seed=46958,
+    factor.names=list(
+      enemy=bot,
+      track=pista)) %>%
+  as_tibble %>%
+  write_delim("experiments/runs.plan", delim=" ", col_names=FALSE)
+
+# the space delimited file is to help with the posterior parsing in the shell
+# script
+#+end_src
+
+#+RESULTS:
+:
+: creating full factorial with 16 runs ...
+
+e para sessões de treinamento em si como um todo:
+
+#+begin_src R :session :results output :exports both
+num_vizinhos = c(5, 10, 20, 40, 80, 160, 320)
+eletismo = c(0.1, 0.15, 0.2, 0.25, 0.3)
+cntr = c('1', '2', '3', '4')
+
+fac.design(
+  nfactors=3,
+  replications=1,
+  repeat.only=FALSE,
+  blocks=1,
+  randomize=TRUE,
+  seed=46958,
+  factor.names=list(
+    controller=cntr,
+    neighbors=num_vizinhos,
+    eletism=eletismo)) %>%
+  as_tibble %>%
+  write_delim("experiments/sessions.plan", delim=" ", col_names=FALSE)
+
+# the space delimited file is to help with the posterior parsing in the shell
+# script
+#+end_src
+
+#+RESULTS:
+:
+: creating full factorial with 140 runs ...
+
+** Script
+
+And here we have our script:
+
+#+begin_src bash :shebang "#!/bin/bash" :exports both :tangle experiments/exp.slurm
+#SBATCH --time=72:00:00
+#SBATCH --chdir=.
+#SBATCH --partition=tupi
+#SBATCH --nodes=1
+#SBATCH --output=%x_%j.out
+#SBATCH --error=%x_%j.err
+#BATCH --mail-type=END,FAIL
+#BATCH --mail-user=hcpsilva@inf.ufrgs.br
+
+# machine:
+MACHINE=${SLURMD_HOSTNAME}_${SLURM_CPUS_ON_NODE}
+
+# parameters:
+# the experiment ID, defined in the lab-book
+EXP_ID=ia_t1
+# the experiment directory
+EXP_DIR=$1
+
+# experiment name (which is the ID and the machine and its core count)
+EXP_NAME=${EXP_ID}_${MACHINE}
+
+# go to the scratch dir
+cd $SCRATCH
+
+# and clean everything
+rm -rf *
+
+# prepare our directory
+mkdir $EXP_NAME
+pushd $EXP_NAME
+
+# copy the code folder
+cp -r $(dirname $EXP_DIR) code
+mkdir results
+output_csv=$(readlink -f results/$EXP_NAME.csv)
+pushd code
+
+# init the csv results file
+echo "controller,neighbors,eletism,iteration,bot,track,score" > $output_csv
+
+# execute the experiment
+while read -r controller neighbors eletism; do
+    iter=0
+    csv_line=${controller},${neighbors},${eletism}
+
+    for i in {1..3}; do
+        # each learning session will iterate 5 times
+        # each plan has 16 combinations
+        # therefore, we'll run 240 times
+
+        while read -r bot track; do
+            echo
+            echo "--> Running with params: $controller $neighbors $eletism $bot $track"
+
+            # run learning session
+            score=$(python3 AIracers.py -t $track -b $bot -a $neighbors $eletism -c $controller learn)
+
+            # update iteration counter
+            ((iter+=5))
+
+            # commit results to csv
+            echo ${csv_line},${iter},${bot},${track},${score} >> $output_csv
+        done < $EXP_DIR/runs.plan
+    done
+done < $EXP_DIR/sessions.plan
+
+popd
+
+# pack everything and send to the exp dir
+tar czf $EXP_DIR/data/$EXP_NAME.tar.gz *
+
+popd
+rm -rf $SCRATCH/*
+#+end_src
