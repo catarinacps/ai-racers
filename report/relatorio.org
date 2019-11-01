@@ -82,9 +82,7 @@ seriam um tópico interessante de se aplicar no trabalho prático.
 #+latex: \begin{listing*}
 #+attr_latex: :options fontsize=\scriptsize
 #+begin_src python :tangle no
-def genetic_algorithm(
-        self, weights, population_size=150,
-        elitism=0.15):
+def genetic_algorithm(self, weights, population_size=150, elitism=0.15):
     roulette = 0.1
     mutation_rate = 0.2
     max_generations = 1
@@ -94,12 +92,25 @@ def genetic_algorithm(
     # ITS TOO BIG
     # HELPS
 
-    return population[np.argmax(fitness)],
-           max(fitness)
+    return population[np.argmax(fitness)], max(fitness)
 #+end_src
 #+latex: \end{listing*}
 
-Comentários sobre a dificuldade de implementação.
+*** Geração da População
+
+Placeholder
+
+*** Recombinação
+
+Placeholder
+
+*** Mutação
+
+Placeholder
+
+*** Seleção da Nova Geração
+
+Placeholder
 
 ** Hill Climbing
 
