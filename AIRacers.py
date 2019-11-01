@@ -19,7 +19,7 @@ import simulator
 from controller1.controller import Controller as Controller1
 from controller2.controller import Controller as Controller2
 from controller3.controller import Controller as Controller3
-# from controller4.controller import Controller as Controller4
+from controller4.controller import Controller as Controller4
 import tracks_config as track
 
 
