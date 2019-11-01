@@ -15,6 +15,7 @@
 #+latex_header: \usepackage{titling}
 #+latex_header: \usepackage{palatino}
 #+latex_header: \usepackage{graphicx}
+#+latex_header: \usepackage{placeins}
 #+latex_header: \usepackage{lipsum}
 #+latex_header: \usepackage[brazilian]{babel}
 #+latex_header: \renewcommand\Authsep{\\}
@@ -75,7 +76,7 @@ Comentários sobre a dificuldade de implementação.
 
 *** Algoritmos Genéticos
 
-Algoritmos Genéticos correspondem a um grupo de metaheurísticas que aplica
+Algoritmos Genéticos correspondem a um grupo de metaheurísticas que aplicam
 analogias provindas da biologia e da solução natural para selecionar indivíduos
 mais aptos em determinada situação. Por serem algoritmos clássicos e por
 possuirem diversas variações e abordagens únicas na literatura, acreditamos que
@@ -84,6 +85,7 @@ seriam um tópico interessante de se aplicar no trabalho prático.
 # explicar cada escolha, o que é o individuo, como geramos a pop, etc
 # uma sessão pra cada algoritmo é pouco :c
 
+#+latex: \begin{listing*}
 #+attr_latex: :options fontsize=\scriptsize
 #+begin_src python :tangle no
 def genetic_algorithm(
@@ -101,6 +103,7 @@ def genetic_algorithm(
     return population[np.argmax(fitness)],
            max(fitness)
 #+end_src
+#+latex: \end{listing*}
 
 Comentários sobre a dificuldade de implementação.
 
