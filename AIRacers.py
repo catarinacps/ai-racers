@@ -115,7 +115,7 @@ def parser() -> (argparse.Namespace, list):
     return arguments, leftovers
 
 
-def comp(a_track: 'Track',weights_1: numpy.ndarray, weights_2: numpy.ndarray, car1_points: int, car2_points: int) -> (int, int):
+def comp(a_track: 'Track', weights_1: numpy.ndarray, weights_2: numpy.ndarray, car1_points: int, car2_points: int) -> (int, int):
     """
     Run competition safely
 

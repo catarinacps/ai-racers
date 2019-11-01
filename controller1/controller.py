@@ -130,7 +130,7 @@ class Controller(controller_template.Controller):
         np.savetxt("ga_best_w.txt", np.array(best_weights))
         return
 
-    def genetic_algorithm(self, weights, population_size=150, eletism=0.15):
+    def genetic_algorithm(self, weights, population_size=150, elitism=0.15):
         roulette = 0.1
         mutation_rate = 0.2
         max_generations = 500
