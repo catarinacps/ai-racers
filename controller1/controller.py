@@ -1,6 +1,5 @@
 import controller_template as controller_template
 import numpy as np
-from math import ceil
 
 # Pretend these are constant indexes for sensors[]
 DIST_LEFT = 0
@@ -15,6 +14,7 @@ ENEMY_NEAR = 8
 NUM_OF_ACTIONS = 5
 BIG_NUMBER = 1000000
 
+
 class Controller(controller_template.Controller):
     def __init__(self, track, evaluate=True, bot_type=None):
         super().__init__(track, evaluate=evaluate, bot_type=bot_type)
@@ -27,12 +27,6 @@ class Controller(controller_template.Controller):
 
         self.features = [1, 0, 0, 0, 0, 0]
         self.num_features = len(self.features)
-
-
-
-    #######################################################################
-    ##### METHODS YOU NEED TO IMPLEMENT ###################################
-    #######################################################################
 
     def take_action(self, parameters: list) -> int:
         """
@@ -51,17 +45,14 @@ class Controller(controller_template.Controller):
 
         weights = np.reshape(np.array(parameters), (NUM_OF_ACTIONS, par_each_Q))
 
-
         for param in weights:
             actions.append(
                 np.sum(np.array(features) * np.array(param))
             )
 
-
         best_action = np.argmax(np.array(actions)) + 1
 
         return best_action
-
 
     def compute_features(self, st):
         """
@@ -79,7 +70,6 @@ class Controller(controller_template.Controller):
           (see the specification file/manual for more details)
         :return: A list containing the features you defined
         """
-
 
         diffCheckpoint = st[DIST_CHECKPOINT] - self.prev_st[DIST_CHECKPOINT]
         diffCheckpoint = diffCheckpoint*2 / 1000
@@ -102,30 +92,26 @@ class Controller(controller_template.Controller):
         riskRightCollision = (1 - st[ON_TRACK])*200 + (st[SPEED] / st[DIST_RIGHT])
         riskRightCollision = (riskRightCollision - 0.1) / 209.9
 
-
         centralizedPosition = (abs(st[DIST_LEFT] - st[DIST_RIGHT]) * -1) + 99
         # max: 0 * -1 + 99 = 99
         # min: |100 - 1| * -1 + 99 = 0
         centralizedPosition = centralizedPosition / 99
 
-
-
-        #if (self.game_state.car1.score > self.prev_score)
-        # depois vejo como lidar quando cruza checkpoint
-        # maximize potential travel distance fulfilled
-        # speed is distance units per 10 frames
-        # if distance to checkpoint reduced by a similar amount,
-        # then the car is going straight to target and ratio == 1.0
-        # opposite direction: ratio -1.0
-        #maxTravel = st[SPEED]/10
-        #direction_kinda = -diffCheckpoint/maxTravel
+        # if (self.game_state.car1.score > self.prev_score)
+        #  depois vejo como lidar quando cruza checkpoint
+        #  maximize potential travel distance fulfilled
+        #  speed is distance units per 10 frames
+        #  if distance to checkpoint reduced by a similar amount,
+        #  then the car is going straight to target and ratio == 1.0
+        #  opposite direction: ratio -1.0
+        #  maxTravel = st[SPEED]/10
+        # direction_kinda = -diffCheckpoint/maxTravel
 
         self.prev_st = st
         return [1, diffCheckpoint, riskHeadCollision, riskLeftCollision,
-        riskRightCollision, centralizedPosition]
+                riskRightCollision, centralizedPosition]
 
-
-    def learn(self, weights, args = None) -> list:
+    def learn(self, weights, args=None) -> list:
         """
         IMPLEMENT YOUR LEARNING METHOD (i.e. YOUR LOCAL SEARCH ALGORITHM) HERE
 
@@ -133,7 +119,6 @@ class Controller(controller_template.Controller):
         :param weights: initial weights of the controller (either loaded from a file or generated randomly)
         :return: the best weights found by your learning algorithm, after the learning process is over
         """
-
 
         print("\n\n############### STARTING TRAINING ###############\n\n")
         if args is not None:
@@ -145,61 +130,59 @@ class Controller(controller_template.Controller):
         np.savetxt("ga_best_w.txt", np.array(best_weights))
         return
 
-    def genetic_algorithm(self, weights, population_size = 150, eletism = 0.15):
+    def genetic_algorithm(self, weights, population_size=150, eletism=0.15):
+        roulette = 0.1
+        mutation_rate = 0.2
+        max_generations = 500
+        max_same_best = 10
+        perturbation_range = 0.5    # [-0.5,0.5]
 
-            roulette = 0.1
-            mutation_rate = 0.2
-            max_generations = 500
-            max_same_best = 10
-            perturbation_range = 0.5    # [-0.5,0.5]
+        population = self.generate_population(weights, population_size)
+        fitness = self.compute_fitness(population)
 
-            population = self.generate_population(weights, population_size)
+        generation = 1
+        same_best = 0
+
+        best_idx = np.argmax(fitness)
+        best_individual_prev = population[best_idx]
+
+        greater_score_found = np.amax(fitness)
+
+        while generation <= max_generations:
+
+            if (fitness[best_idx] > greater_score_found):
+                greater_score_found = fitness[np.argmax(fitness)]
+                np.savetxt("best_genetic.txt", best_individual_prev)
+
+            print("\n\nGeneration:", generation)
+            print("Best population score:", fitness[best_idx])
+            print("Greater score found among generations:", greater_score_found)
+            print("\n\n")
+
+
+            population = self.select_population(population, fitness, elitism, roulette)
+            population = self.cross_population(population, population_size, mutation_rate, perturbation_range)
             fitness = self.compute_fitness(population)
-
-            generation = 1
-            same_best = 0
+            generation += 1
 
             best_idx = np.argmax(fitness)
-            best_individual_prev = population[best_idx]
-
-            greater_score_found = np.amax(fitness)
-
-            while generation <= max_generations:
-
-                if (fitness[best_idx] > greater_score_found):
-                    greater_score_found = fitness[np.argmax(fitness)]
-                    np.savetxt("best_genetic.txt", best_individual_prev)
-
-                print("\n\nGeneration:", generation)
-                print("Best population score:", fitness[best_idx])
-                print("Greater score found among generations:", greater_score_found)
-                print("\n\n")
+            best_individual = population[best_idx]
 
 
-                population = self.select_population(population, fitness, elitism, roulette)
-                population = self.cross_population(population, population_size, mutation_rate, perturbation_range)
-                fitness = self.compute_fitness(population)
-                generation += 1
+            if (np.array_equal(best_individual, best_individual_prev)):
+                same_best += 1
+                if (same_best >= max_same_best):
+                    print("Same individual found", same_best,
+                          "times. Learning algorithm stopped.")
+                    return population[np.argmax(fitness)]
 
-                best_idx = np.argmax(fitness)
-                best_individual = population[best_idx]
+            else:
+                same_best = 0
 
+            best_individual_prev = best_individual
 
-                if (np.array_equal(best_individual, best_individual_prev)):
-                    same_best += 1
-                    if (same_best >= max_same_best):
-                        print("Same individual found", same_best,
-                            "times. Learning algorithm stopped.")
-                        return population[np.argmax(fitness)]
-
-                else:
-                    same_best = 0
-
-                best_individual_prev = best_individual
-
-            print("Max generations reached. Learning algorithm stopped.")
-            return population[np.argmax(fitness)]
-
+        print("Max generations reached. Learning algorithm stopped.")
+        return population[np.argmax(fitness)]
 
     # Input parameters: list size of the current weights; number of individuals to be generated
     # Output returned: new set of weights
@@ -209,24 +192,21 @@ class Controller(controller_template.Controller):
 
         for i in range(population_size-1):
             population.append(
-                #np.random.uniform(low=np.amin(weights), high=np.amax(weights), size=len(weights))
+                # np.random.uniform(low=np.amin(weights), high=np.amax(weights), size=len(weights))
                 np.random.uniform(low=-1.0, high=1.0, size=len(weights))
             )
 
         return population
 
-
     # Input parameters: list of individual solutions
     # Output returned: list of fitness score for each individual
     def compute_fitness(self, population):
-
         fitness = []
 
         for individual in population:
             fitness.append(self.run_episode(individual) + BIG_NUMBER)
 
         return fitness
-
 
     # Input parameters: list of individual solutions; fitness; fraction to keep by elitism; fraction to keep by roulette
     # Output returned: selected individuals
@@ -245,7 +225,6 @@ class Controller(controller_template.Controller):
             # Delete the already selected individuals by the elitism method
             population = np.delete(population, elite_idx, axis=0)
             fitness = np.delete(fitness, elite_idx, axis=0)
-
 
         drawn_from_roulette = []
         if (roulette != 0):
@@ -266,16 +245,13 @@ class Controller(controller_template.Controller):
 
             drawn_from_roulette = np.array(drawn_from_roulette)
 
-
         selected_population = np.append(elite, drawn_from_roulette, axis=0)
         return selected_population
-
 
     # Crossover method used: uniform crossover with random crossover mask
     # Input parameters: list of individual solutions; list of maximum individuals
     # Output returned: new population
     def cross_population(self, population, population_size, mutation_rate, perturbation_range):
-
         missing_population = []
         num_missing_individuals = population_size - len(population)
 
@@ -304,20 +280,17 @@ class Controller(controller_template.Controller):
         new_population = np.append(population, missing_population, axis=0)
         return new_population
 
-
     # Input parameters: list of individual solutions;
     # Output returned: new population
     def mutate_population(self, population, mutation_rate, perturbation_range=0.1):
 
         mutation_percentage = mutation_rate*100
-        #population = self.mutate_per_individual(population, mutation_percentage, perturbation_range)
+        # population = self.mutate_per_individual(population, mutation_percentage, perturbation_range)
         population = self.mutate_per_gene(population, mutation_percentage, perturbation_range)
 
         return population
 
-
     def mutate_per_individual(self, population, mutation_percentage, perturbation_range=0.1):
-
         for individual in population:
             rand = np.random.randint(0, 101)
 
@@ -329,7 +302,6 @@ class Controller(controller_template.Controller):
                     individual[mutation_gene] += perturbation
 
         return population
-
 
     def mutate_per_gene(self, population, mutation_percentage, perturbation_range=0.1):
 
@@ -343,10 +315,8 @@ class Controller(controller_template.Controller):
 
         return population
 
-
     def must_mutate(self, rand, mutation):
         return rand <= mutation
-
 
     # vou deixar essa Coisa aqui ate achar um jeito pratico de usar
     @property
@@ -364,6 +334,7 @@ class Controller(controller_template.Controller):
     @property
     def onTrack(self):
         return self.sensors[3]
+
     @property
     def distCheckpoint(self):
         return self.sensors[4]

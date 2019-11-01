@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 This module collects command line arguments and prepares everything needed to run the simulator/game
 
@@ -6,6 +7,7 @@ Example:
 
         $ python AIRacers.py -t track1 play
 """
+
 import os
 import argparse
 import random
@@ -182,7 +184,7 @@ if __name__ == '__main__':
         fake_sensors = [53, 66, 100, 1, 172.1353274581511, 150, -1, 0, 0]
         features_len = len(ctrl_temp.compute_features(fake_sensors))
         weights = [random.uniform(-1, 1) for i in range(0, features_len * 5)]
-        print(weights)
+        # print(weights)
     else:
         weights = numpy.loadtxt(args.w[0])
 
@@ -217,7 +219,7 @@ if __name__ == '__main__':
         if not os.path.exists("./params"):
             os.makedirs("./params")
         output = "./params/%s.txt" % datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%d%H%M%S')
-        print(output)
+        print(result)
         numpy.savetxt(output, result)
     elif str(args.mode) == 'comp':
         w_ctrl1 = numpy.loadtxt('controller1/weights.txt')
@@ -228,10 +230,10 @@ if __name__ == '__main__':
 
         for a_track in track.track.track_list:
             print("Starting race in track %s\n" % a_track.name)
-            car1_pts, car2_pts = comp(a_track,w_ctrl1, w_ctrl2, car1_pts, car2_pts)
+            car1_pts, car2_pts = comp(a_track, w_ctrl1, w_ctrl2, car1_pts, car2_pts)
             print("Switching Sides...\n")
             a_track.car1_position, a_track.car2_position = a_track.car2_position, a_track.car1_position
-            car1_pts, car2_pts = comp(a_track,w_ctrl1, w_ctrl2, car1_pts, car2_pts)
+            car1_pts, car2_pts = comp(a_track, w_ctrl1, w_ctrl2, car1_pts, car2_pts)
             a_track.car1_position, a_track.car2_position = a_track.car2_position, a_track.car1_position
 
         print("Total score player 1: %dpts" % car1_pts)
