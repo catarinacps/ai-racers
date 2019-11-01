@@ -15,7 +15,6 @@
 #+latex_header: \usepackage{titling}
 #+latex_header: \usepackage{palatino}
 #+latex_header: \usepackage{graphicx}
-#+latex_header: \usepackage{placeins}
 #+latex_header: \usepackage{lipsum}
 #+latex_header: \usepackage[brazilian]{babel}
 #+latex_header: \renewcommand\Authsep{\\}
@@ -48,12 +47,7 @@ chegou a pontuar em média etc pontos em todas as pistas.
 
 \lipsum[1-1]
 
-* Desenvolvimento
-
-Sendo um trabalho primeiramente de implementação, tentamos colocar em primeiro
-lugar os interesses e curiosidades do grupo na escolha dos algoritmos.
-
-** Algoritmos Escolhidos
+* Algoritmos Implementados
 
 Dentre os variados algoritmos que nos foram apresentados tanto em aula quanto
 nas publicações que versam sobre o estado da arte, escolhemos os sequintes:
@@ -66,7 +60,7 @@ Esse grupo de algoritmos, acreditamos nós, é uma gama que tem tanto abordagens
 clássicas quanto modernas, o que para a comparação futura nos pareceu
 interessante.
 
-*** CMA-ES
+** CMA-ES
 
 Leve preâmbulo de explicação.
 
@@ -74,7 +68,7 @@ Snippet do código.
 
 Comentários sobre a dificuldade de implementação.
 
-*** Algoritmos Genéticos
+** Algoritmos Genéticos
 
 Algoritmos Genéticos correspondem a um grupo de metaheurísticas que aplicam
 analogias provindas da biologia e da solução natural para selecionar indivíduos
@@ -107,7 +101,7 @@ def genetic_algorithm(
 
 Comentários sobre a dificuldade de implementação.
 
-*** Hill Climbing
+** Hill Climbing
 
 Leve preâmbulo de explicação.
 
@@ -115,21 +109,31 @@ Snippet do código.
 
 Comentários sobre a dificuldade de implementação.
 
-*** Simulated Annealing
+** Simulated Annealing
 
 Leve preâmbulo de explicação.
 
 Snippet do código.
 
 Comentários sobre a dificuldade de implementação.
+
+
+* Desenvolvimento
+
+Sendo um trabalho primeiramente de implementação, tentamos colocar em primeiro
+lugar os interesses e curiosidades do grupo na escolha dos algoritmos.
 
 ** Estratégia de Desenvolvimento
 
 \lipsum[1-1]
 
+** Episódio e Sessões de Treinamento
+
+\lipsum[2-2]
+
 ** Features Escolhidas
 
-\lipsum[1-1]
+\lipsum[3-3]
 
 * Resultados
 
