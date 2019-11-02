@@ -63,10 +63,41 @@ fac.design(
 #+end_src
 
 #+RESULTS:
-:
 : creating full factorial with 16 runs ...
 
 e para sessões de treinamento em si como um todo:
+
+*** Genéticos
+
+#+begin_src R :session :results output :exports both
+taxa_mutacao = c(0.05, 0.1, 0.15, 0.2, 0.25, 0.35)
+populacao = c(5, 10, 20, 40, 80, 160, 320)
+roleta = c(0.025, 0.05, 0.1, 0.15)
+eletismo = c(0.1, 0.15, 0.2, 0.25, 0.3)
+
+fac.design(
+  nfactors=4,
+  replications=1,
+  repeat.only=FALSE,
+  blocks=1,
+  randomize=TRUE,
+  seed=46958,
+  factor.names=list(
+    neighbors=populacao,
+    roulette=roleta,
+    mutation=taxa_mutacao,
+    elitism=eletismo)) %>%
+  as_tibble %>%
+  write_delim("experiments/ga.plan", delim=" ", col_names=FALSE)
+
+# the space delimited file is to help with the posterior parsing in the shell
+# script
+#+end_src
+
+#+RESULTS:
+: creating full factorial with 840 runs ...
+
+*** Comparação
 
 #+begin_src R :session :results output :exports both
 num_vizinhos = c(5, 10, 20, 40, 80, 160, 320)
@@ -85,14 +116,13 @@ fac.design(
     neighbors=num_vizinhos,
     elitism=eletismo)) %>%
   as_tibble %>%
-  write_delim("experiments/sessions.plan", delim=" ", col_names=FALSE)
+  write_delim("experiments/combined.plan", delim=" ", col_names=FALSE)
 
 # the space delimited file is to help with the posterior parsing in the shell
 # script
 #+end_src
 
 #+RESULTS:
-:
 : creating full factorial with 140 runs ...
 
 ** Script
@@ -136,13 +166,42 @@ pushd $EXP_NAME
 # copy the code folder
 cp -r $(dirname $EXP_DIR) code
 mkdir results
-output_csv=$(readlink -f results/$EXP_NAME.csv)
+combined_csv=$(readlink -f results/${EXP_NAME}_combined.csv)
+ga_csv=$(readlink -f results/${EXP_NAME}_ga.csv)
+cmaes_csv=$(readlink -f results/${EXP_NAME}_cmaes.csv)
 pushd code
 
 # init the csv results file
-echo "controller,neighbors,elitism,iteration,bot,track,score" > $output_csv
+echo "controller,neighbors,elitism,iteration,bot,track,score" > $combined_csv
+echo "population,roulette,mutation,elitism,iteration,bot,track,score" > $ga_csv
 
-# execute the experiment
+# genetic algorithms
+while read -r population roulette mutation elitism; do
+    iter=0
+    csv_line=${population},${roulette},${mutation},${elitism}
+
+    for i in {1..6}; do
+        # each learning session will iterate 5 times
+        # each plan has 16 combinations
+        # therefore, we'll run 240 times
+
+        while read -r bot track; do
+            echo
+            echo "--> Running with params: $population $roulette $mutation $elitism $bot $track"
+
+            # run learning session
+            score=$(python3 AIracers.py -t $track -b $bot -a $population $roulette $mutation $elitism -c 1 learn)
+
+            # update iteration counter
+            ((iter+=5))
+
+            # commit results to csv
+            echo ${csv_line},${iter},${bot},${track},${score} >> $ga_csv
+        done < $EXP_DIR/runs.plan
+    done
+done < $EXP_DIR/ga.plan
+
+# combined arguments
 while read -r controller neighbors elitism; do
     iter=0
     csv_line=${controller},${neighbors},${elitism}
@@ -166,7 +225,7 @@ while read -r controller neighbors elitism; do
             echo ${csv_line},${iter},${bot},${track},${score} >> $output_csv
         done < $EXP_DIR/runs.plan
     done
-done < $EXP_DIR/sessions.plan
+done < $EXP_DIR/combined.plan
 
 popd
 

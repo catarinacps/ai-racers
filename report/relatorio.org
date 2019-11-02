@@ -76,9 +76,6 @@ mais aptos em determinada situação. Por serem algoritmos clássicos e por
 possuirem diversas variações e abordagens únicas na literatura, acreditamos que
 seriam um tópico interessante de se aplicar no trabalho prático.
 
-# explicar cada escolha, o que é o individuo, como geramos a pop, etc
-# uma sessão pra cada algoritmo é pouco :c
-
 #+latex: \begin{listing*}
 #+attr_latex: :options fontsize=\scriptsize
 #+begin_src python :tangle no
@@ -127,7 +124,6 @@ Leve preâmbulo de explicação.
 Snippet do código.
 
 Comentários sobre a dificuldade de implementação.
-
 
 * Desenvolvimento
 

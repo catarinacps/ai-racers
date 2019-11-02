@@ -1,8 +1,8 @@
 import numpy as np
+import multiprocessing as mp
 from datetime import datetime
 from controller import controller
 BIG_NUMBER = 1000000
-
 
 
 class Controller(controller.Controller):
@@ -26,9 +26,9 @@ class Controller(controller.Controller):
     def genetic_algorithm(self, weights, population_size=150, elitism=0.15):
         roulette = 0.1
         mutation_rate = 0.2
-        max_generations = 1#500
+        max_generations = 1  # 500
         max_same_best = 10
-        perturbation_range = 0.5    # [-0.5,0.5]
+        perturbation_range = 0.5  # [-0.5,0.5]
 
         population = self.generate_population(weights, population_size)
         fitness = self.compute_fitness(population)
@@ -60,7 +60,6 @@ class Controller(controller.Controller):
             best_idx = np.argmax(fitness)
             best_individual = population[best_idx]
 
-
             if np.array_equal(best_individual, best_individual_prev):
                 same_best += 1
                 if same_best >= max_same_best:
@@ -91,6 +90,20 @@ class Controller(controller.Controller):
 
         return population
 
+    def generate_population_async(self, weights, population_size):
+
+        population = [None] * population_size
+
+        pool = mp.Pool(mp.cpu_count())
+
+        population = [pool.apply(
+            np.random.uniform, kwds={'low': -1.0, 'high': 1.0, 'size': len(weights)})
+                      for i in range(population_size)]
+
+        population[0] = [weights]
+
+        return population
+
     # Input parameters: list of individual solutions
     # Output returned: list of fitness score for each individual
     def compute_fitness(self, population):
@@ -98,6 +111,18 @@ class Controller(controller.Controller):
 
         for individual in population:
             fitness.append(self.run_episode(individual) + BIG_NUMBER)
+
+        return fitness
+
+    def compute_fitness_async(self, population):
+
+        fitness = [None] * len(population)
+
+        pool = mp.Pool(mp.cpu_count())
+
+        fitness = [pool.apply(self.run_episode, args=(individual))
+                   for individual in population]
+        fitness = [x + BIG_NUMBER for x in fitness]
 
         return fitness
 
