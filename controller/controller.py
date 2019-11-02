@@ -14,6 +14,7 @@ ENEMY_ANGLE = 7
 ENEMY_NEAR = 8
 NUM_OF_ACTIONS = 5
 
+
 class Controller(controller_template.Controller):
     num_actions = 5
     sensors = [0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -113,7 +114,7 @@ class Controller(controller_template.Controller):
 
     # the a argument is to receive additional arguments
     # and also it wasn't executing without it don't @ me
-    def learn(self, weights, a):
+    def learn(self, weights, *argv):
         """
         IMPLEMENT YOUR LEARNING METHOD (i.e. YOUR LOCAL SEARCH ALGORITHM) HERE
 
@@ -123,12 +124,11 @@ class Controller(controller_template.Controller):
         """
 
         print("\n\n############### STARTING TRAINING ###############\n\n")
-        best_weights, best_score =  self.local_search(weights)
-        print("\n\n###############   BEST  WEIGHTS   ###############n\n")
+        best_weights, best_score = self.local_search(weights, *argv)
+        print("\n\n###############   BEST  WEIGHTS   ###############\n\n")
         print(best_weights)
         Controller.save_result(self, best_weights, best_score)
         return best_weights
-
 
     def local_search(self, weights):
         raise NotImplementedError("This Method Must Be Implemented")

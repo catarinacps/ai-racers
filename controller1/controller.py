@@ -90,7 +90,7 @@ class Controller(controller.Controller):
 
         return population
 
-    def generate_population_async(self, weights, population_size):
+    def generate_population_par(self, weights, population_size):
 
         population = [None] * population_size
 
@@ -115,7 +115,7 @@ class Controller(controller.Controller):
 
         return fitness
 
-    def compute_fitness_async(self, population):
+    def compute_fitness_par(self, population):
 
         fitness = [None] * len(population)
 
