@@ -15,7 +15,7 @@ MACHINE=${SLURMD_HOSTNAME}_${SLURM_CPUS_ON_NODE}
 
 # parameters:
 # the experiment ID, defined in the lab-book
-EXP_ID=ia_t1
+EXP_ID=ga_ia_t1
 # the experiment directory
 EXP_DIR=$1
 
@@ -35,14 +35,11 @@ pushd $EXP_NAME
 # copy the code folder
 cp -r $(dirname $EXP_DIR) code
 mkdir results
-combined_csv=$(readlink -f results/${EXP_NAME}_combined.csv)
-ga_csv=$(readlink -f results/${EXP_NAME}_ga.csv)
-cmaes_csv=$(readlink -f results/${EXP_NAME}_cmaes.csv)
+results_csv=$(readlink -f results/${EXP_NAME}.csv)
 pushd code
 
 # init the csv results file
-echo "controller,neighbors,elitism,iteration,bot,track,score" > $combined_csv
-echo "population,roulette,mutation,elitism,iteration,bot,track,score" > $ga_csv
+echo "population,roulette,mutation,elitism,iteration,bot,track,score" > $results_csv
 
 # genetic algorithms
 while read -r population roulette mutation elitism; do
@@ -59,42 +56,16 @@ while read -r population roulette mutation elitism; do
             echo "--> Running with params: $population $roulette $mutation $elitism $bot $track"
 
             # run learning session
-            score=$(python3 AIracers.py -t $track -b $bot -a $population $roulette $mutation $elitism -c 1 learn)
+            score=$(python3 AIracers.py -t $track -b $bot -a ${population},${roulette},${mutation},${elitism} -c 1 learn)
 
             # update iteration counter
             ((iter+=5))
 
             # commit results to csv
-            echo ${csv_line},${iter},${bot},${track},${score} >> $ga_csv
+            echo ${csv_line},${iter},${bot},${track},${score} >> $results_csv
         done < $EXP_DIR/runs.plan
     done
 done < $EXP_DIR/ga.plan
-
-# combined arguments
-while read -r controller neighbors elitism; do
-    iter=0
-    csv_line=${controller},${neighbors},${elitism}
-
-    for i in {1..6}; do
-        # each learning session will iterate 5 times
-        # each plan has 16 combinations
-        # therefore, we'll run 240 times
-
-        while read -r bot track; do
-            echo
-            echo "--> Running with params: $controller $neighbors $elitism $bot $track"
-
-            # run learning session
-            score=$(python3 AIracers.py -t $track -b $bot -a $neighbors $elitism -c $controller learn)
-
-            # update iteration counter
-            ((iter+=5))
-
-            # commit results to csv
-            echo ${csv_line},${iter},${bot},${track},${score} >> $output_csv
-        done < $EXP_DIR/runs.plan
-    done
-done < $EXP_DIR/combined.plan
 
 popd
 

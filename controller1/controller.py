@@ -22,14 +22,18 @@ class Controller(controller.Controller):
         f.write(weights)
         f.close()
 
-    def genetic_algorithm(self, weights, population_size=100, elitism=0.15, mutation_rate=0.2):
-        roulette = 0.1
-        mutation_rate = 0.5
+    def genetic_algorithm(self,
+                          weights,
+                          population_size=100,
+                          elitism=0.15,
+                          mutation_rate=0.2,
+                          roulette=0.1):  # sori the line was huge
+
         max_generations = 500
         max_same_best = 10
         perturbation_range = 0.5  # [-0.5,0.5]
 
-        population = self.generate_population_async(weights, population_size)
+        population = self.generate_population_par(weights, population_size)
         fitness = self.compute_fitness(population)
 
         generation = 1
@@ -98,7 +102,7 @@ class Controller(controller.Controller):
 
         population = [pool.apply(
             np.random.uniform, kwds={'low': -1.0, 'high': 1.0, 'size': len(weights)})
-                      for i in range(population_size)]
+                      for _ in range(population_size)]
 
         population[0] = weights
 
@@ -114,14 +118,14 @@ class Controller(controller.Controller):
 
         return fitness
 
+    # RIP
     def compute_fitness_par(self, population):
 
-        fitness = [None] * len(population)
+        fitness = []
 
         pool = mp.Pool(mp.cpu_count())
 
-        fitness = [pool.apply(self.run_episode, args=(individual))
-                   for individual in population]
+        fitness = pool.map(self.run_episode, population)
 
         return fitness
 
@@ -153,7 +157,7 @@ class Controller(controller.Controller):
             s = np.sum(fitness_zero_shifted)
 
             for _ in range(num_from_roulette):
-                r = np.random.randint(0,s)
+                r = np.random.randint(0, s)
                 t = 0
                 for i, score in enumerate(fitness_zero_shifted):
                     t = t + score

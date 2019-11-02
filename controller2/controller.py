@@ -26,7 +26,11 @@ class Controller(controller.Controller):
     # Covariance Matrix Adaptation Evolution Strategy
     # Input initial weights
     # Output better weights
-    def cma_es(self, weights, sample_size = 5, top_percentage = 0.5):
+    def cma_es(self,
+               weights,
+               sample_size=5,
+               top_percentage=0.5,
+               convergence_delta=0.01):
 
         # Algorithm parameters
         # sample_size: number of randomly generated candidates

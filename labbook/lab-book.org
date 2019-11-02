@@ -28,7 +28,7 @@ library(tidyverse)
 options(crayon.enabled=FALSE)
 #+end_src
 
-** Design
+** Design Comum
 
 A seed randômica é:
 
@@ -65,9 +65,9 @@ fac.design(
 #+RESULTS:
 : creating full factorial with 16 runs ...
 
-e para sessões de treinamento em si como um todo:
+** Algoritmos Genéticos
 
-*** Genéticos
+*** Design
 
 #+begin_src R :session :results output :exports both
 taxa_mutacao = c(0.05, 0.1, 0.15, 0.2, 0.25, 0.35)
@@ -97,7 +97,204 @@ fac.design(
 #+RESULTS:
 : creating full factorial with 840 runs ...
 
-*** Comparação
+*** Script
+
+And here we have our script:
+
+#+begin_src bash :shebang "#!/bin/bash" :exports both :tangle experiments/ga.slurm
+#SBATCH --time=72:00:00
+#SBATCH --chdir=.
+#SBATCH --partition=tupi
+#SBATCH --nodes=1
+#SBATCH --output=%x_%j.out
+#SBATCH --error=%x_%j.err
+#BATCH --mail-type=END,FAIL
+#BATCH --mail-user=hcpsilva@inf.ufrgs.br
+
+set -euo pipefail
+
+# machine:
+MACHINE=${SLURMD_HOSTNAME}_${SLURM_CPUS_ON_NODE}
+
+# parameters:
+# the experiment ID, defined in the lab-book
+EXP_ID=ga_ia_t1
+# the experiment directory
+EXP_DIR=$1
+
+# experiment name (which is the ID and the machine and its core count)
+EXP_NAME=${EXP_ID}_${MACHINE}
+
+# go to the scratch dir
+cd $SCRATCH
+
+# and clean everything
+rm -rf *
+
+# prepare our directory
+mkdir $EXP_NAME
+pushd $EXP_NAME
+
+# copy the code folder
+cp -r $(dirname $EXP_DIR) code
+mkdir results
+results_csv=$(readlink -f results/${EXP_NAME}.csv)
+pushd code
+
+# init the csv results file
+echo "population,roulette,mutation,elitism,iteration,bot,track,score" > $results_csv
+
+# genetic algorithms
+while read -r population roulette mutation elitism; do
+    iter=0
+    csv_line=${population},${roulette},${mutation},${elitism}
+
+    for i in {1..6}; do
+        # each learning session will iterate 5 times
+        # each plan has 16 combinations
+        # therefore, we'll run 240 times
+
+        while read -r bot track; do
+            echo
+            echo "--> Running with params: $population $roulette $mutation $elitism $bot $track"
+
+            # run learning session
+            score=$(python3 AIracers.py -t $track -b $bot -a ${population},${roulette},${mutation},${elitism} -c 1 learn)
+
+            # update iteration counter
+            ((iter+=5))
+
+            # commit results to csv
+            echo ${csv_line},${iter},${bot},${track},${score} >> $results_csv
+        done < $EXP_DIR/runs.plan
+    done
+done < $EXP_DIR/ga.plan
+
+popd
+
+# pack everything and send to the exp dir
+tar czf $EXP_DIR/data/$EXP_NAME.tar.gz *
+
+popd
+rm -rf $SCRATCH/*
+#+end_src
+
+** CMA-ES
+
+*** Design
+
+#+begin_src R :session :results output :exports both
+populacao = c(5, 10, 20, 40, 80, 160, 320)
+top = c(0.1, 0.2, 0.3, 0.5)
+delta = c(0.001, 0.01, 0.02, 0.05, 0.1)
+
+fac.design(
+  nfactors=3,
+  replications=1,
+  repeat.only=FALSE,
+  blocks=1,
+  randomize=TRUE,
+  seed=46958,
+  factor.names=list(
+    sample_size=populacao,
+    top_percentage=top,
+    convergence_delta=delta)) %>%
+  as_tibble %>%
+  write_delim("experiments/cmaes.plan", delim=" ", col_names=FALSE)
+
+# the space delimited file is to help with the posterior parsing in the shell
+# script
+#+end_src
+
+#+RESULTS:
+: creating full factorial with 140 runs ...
+
+*** Script
+
+And here we have our script:
+
+
+#+begin_src bash :shebang "#!/bin/bash" :exports both :tangle experiments/cmaes.slurm
+#SBATCH --time=72:00:00
+#SBATCH --chdir=.
+#SBATCH --partition=tupi
+#SBATCH --nodes=1
+#SBATCH --output=%x_%j.out
+#SBATCH --error=%x_%j.err
+#BATCH --mail-type=END,FAIL
+#BATCH --mail-user=hcpsilva@inf.ufrgs.br
+
+set -euo pipefail
+
+# machine:
+MACHINE=${SLURMD_HOSTNAME}_${SLURM_CPUS_ON_NODE}
+
+# parameters:
+# the experiment ID, defined in the lab-book
+EXP_ID=cmaes_ia_t1
+# the experiment directory
+EXP_DIR=$1
+
+# experiment name (which is the ID and the machine and its core count)
+EXP_NAME=${EXP_ID}_${MACHINE}
+
+# go to the scratch dir
+cd $SCRATCH
+
+# and clean everything
+rm -rf *
+
+# prepare our directory
+mkdir $EXP_NAME
+pushd $EXP_NAME
+
+# copy the code folder
+cp -r $(dirname $EXP_DIR) code
+mkdir results
+results_csv=$(readlink -f results/${EXP_NAME}.csv)
+pushd code
+
+# init the csv results file
+echo "sample_size,top_percentage,convergence_delta,iteration,bot,track,score" > $results_csv
+
+# genetic algorithms
+while read -r sample_size top_percentage convergence_delta; do
+    iter=0
+    csv_line=${sample_size},${top_percentage},${convergence_delta}
+
+    for i in {1..6}; do
+        # each learning session will iterate 5 times
+        # each plan has 16 combinations
+        # therefore, we'll run 240 times
+
+        while read -r bot track; do
+            echo
+            echo "--> Running with params: $sample_size $top_percentage $convergence_delta $bot $track"
+
+            # run learning session
+            score=$(python3 AIracers.py -t $track -b $bot -a ${sample_size},${top_percentage},${convergence_delta} -c 2 learn)
+
+            # update iteration counter
+            ((iter+=5))
+
+            # commit results to csv
+            echo ${csv_line},${iter},${bot},${track},${score} >> $results_csv
+        done < $EXP_DIR/runs.plan
+    done
+done < $EXP_DIR/cmaes.plan
+
+popd
+
+# pack everything and send to the exp dir
+tar czf $EXP_DIR/data/$EXP_NAME.tar.gz *
+
+popd
+rm -rf $SCRATCH/*
+#+end_src
+
+** Comparação
+
+*** Design
 
 #+begin_src R :session :results output :exports both
 num_vizinhos = c(5, 10, 20, 40, 80, 160, 320)
@@ -125,11 +322,9 @@ fac.design(
 #+RESULTS:
 : creating full factorial with 140 runs ...
 
-** Script
+*** Script
 
-And here we have our script:
-
-#+begin_src bash :shebang "#!/bin/bash" :exports both :tangle experiments/exp.slurm
+#+begin_src bash :shebang "#!/bin/bash" :exports both :tangle experiments/combined.slurm
 #SBATCH --time=72:00:00
 #SBATCH --chdir=.
 #SBATCH --partition=tupi
@@ -146,7 +341,7 @@ MACHINE=${SLURMD_HOSTNAME}_${SLURM_CPUS_ON_NODE}
 
 # parameters:
 # the experiment ID, defined in the lab-book
-EXP_ID=ia_t1
+EXP_ID=combined_ia_t1
 # the experiment directory
 EXP_DIR=$1
 
@@ -166,42 +361,13 @@ pushd $EXP_NAME
 # copy the code folder
 cp -r $(dirname $EXP_DIR) code
 mkdir results
-combined_csv=$(readlink -f results/${EXP_NAME}_combined.csv)
-ga_csv=$(readlink -f results/${EXP_NAME}_ga.csv)
-cmaes_csv=$(readlink -f results/${EXP_NAME}_cmaes.csv)
+results_csv=$(readlink -f results/${EXP_NAME}_combined.csv)
 pushd code
 
 # init the csv results file
-echo "controller,neighbors,elitism,iteration,bot,track,score" > $combined_csv
-echo "population,roulette,mutation,elitism,iteration,bot,track,score" > $ga_csv
+echo "controller,neighbors,elitism,iteration,bot,track,score" > $results_csv
 
-# genetic algorithms
-while read -r population roulette mutation elitism; do
-    iter=0
-    csv_line=${population},${roulette},${mutation},${elitism}
-
-    for i in {1..6}; do
-        # each learning session will iterate 5 times
-        # each plan has 16 combinations
-        # therefore, we'll run 240 times
-
-        while read -r bot track; do
-            echo
-            echo "--> Running with params: $population $roulette $mutation $elitism $bot $track"
-
-            # run learning session
-            score=$(python3 AIracers.py -t $track -b $bot -a $population $roulette $mutation $elitism -c 1 learn)
-
-            # update iteration counter
-            ((iter+=5))
-
-            # commit results to csv
-            echo ${csv_line},${iter},${bot},${track},${score} >> $ga_csv
-        done < $EXP_DIR/runs.plan
-    done
-done < $EXP_DIR/ga.plan
-
-# combined arguments
+# combined run
 while read -r controller neighbors elitism; do
     iter=0
     csv_line=${controller},${neighbors},${elitism}
@@ -222,7 +388,7 @@ while read -r controller neighbors elitism; do
             ((iter+=5))
 
             # commit results to csv
-            echo ${csv_line},${iter},${bot},${track},${score} >> $output_csv
+            echo ${csv_line},${iter},${bot},${track},${score} >> $results_csv
         done < $EXP_DIR/runs.plan
     done
 done < $EXP_DIR/combined.plan
