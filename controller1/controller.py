@@ -2,7 +2,6 @@ import numpy as np
 import multiprocessing as mp
 from datetime import datetime
 from controller import controller
-BIG_NUMBER = 1000000
 
 
 class Controller(controller.Controller):
@@ -23,7 +22,7 @@ class Controller(controller.Controller):
         f.write(weights)
         f.close()
 
-    def genetic_algorithm(self, weights, population_size=20, elitism=0.15, mutation_rate=0.2):
+    def genetic_algorithm(self, weights, population_size=100, elitism=0.15, mutation_rate=0.2):
         roulette = 0.1
         mutation_rate = 0.5
         max_generations = 500
@@ -55,6 +54,7 @@ class Controller(controller.Controller):
             population = self.select_population(population, fitness, elitism, roulette)
             population = self.cross_population(population, population_size, mutation_rate, perturbation_range)
             fitness = self.compute_fitness(population)
+
             generation += 1
 
             best_idx = np.argmax(fitness)
@@ -75,9 +75,9 @@ class Controller(controller.Controller):
         print("Max generations reached. Learning algorithm stopped.")
         return population[np.argmax(fitness)], max(fitness)
 
+
     # Input parameters: list size of the current weights; number of individuals to be generated
     # Output returned: new set of weights, int score
-
     def generate_population(self, weights, population_size):
 
         population = [weights]
@@ -110,7 +110,6 @@ class Controller(controller.Controller):
         fitness = []
 
         for individual in population:
-            #fitness.append(self.run_episode(individual) + BIG_NUMBER)
             fitness.append(self.run_episode(individual))
 
         return fitness
@@ -123,7 +122,6 @@ class Controller(controller.Controller):
 
         fitness = [pool.apply(self.run_episode, args=(individual))
                    for individual in population]
-        #fitness = [x + BIG_NUMBER for x in fitness]
 
         return fitness
 
@@ -152,9 +150,7 @@ class Controller(controller.Controller):
 
             # avoiding too negative sum result
             fitness_zero_shifted = fitness + abs(np.amin(fitness))
-            print("zero shifted:", fitness_zero_shifted)
             s = np.sum(fitness_zero_shifted)
-            print("\n\ns", s)
 
             for _ in range(num_from_roulette):
                 r = np.random.randint(0,s)
