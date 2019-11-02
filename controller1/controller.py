@@ -29,7 +29,7 @@ class Controller(controller.Controller):
         max_same_best = 10
         perturbation_range = 0.5  # [-0.5,0.5]
 
-        population = self.generate_population(weights, population_size)
+        population = self.generate_population_async(weights, population_size)
         fitness = self.compute_fitness(population)
 
         generation = 1
@@ -100,7 +100,7 @@ class Controller(controller.Controller):
             np.random.uniform, kwds={'low': -1.0, 'high': 1.0, 'size': len(weights)})
                       for i in range(population_size)]
 
-        population[0] = [weights]
+        population[0] = weights
 
         return population
 
