@@ -56,7 +56,13 @@ while read -r sample_size top_percentage convergence_delta; do
             echo "--> Running with params: $sample_size $top_percentage $convergence_delta $bot $track"
 
             # run learning session
-            score=$(python3 AIracers.py -t $track -b $bot -a ${sample_size},${top_percentage},${convergence_delta} -c 2 learn)
+            python3 AIracers.py \
+                    -t $track \
+                    -b $bot \
+                    -a ${sample_size},${top_percentage},${convergence_delta} \
+                    -c 2 learn &> /dev/null
+
+            score=$(grep Score: cma-best_w | awk '{print $2}')
 
             # update iteration counter
             ((iter+=5))

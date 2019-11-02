@@ -56,7 +56,13 @@ while read -r population roulette mutation elitism; do
             echo "--> Running with params: $population $roulette $mutation $elitism $bot $track"
 
             # run learning session
-            score=$(python3 AIracers.py -t $track -b $bot -a ${population},${roulette},${mutation},${elitism} -c 1 learn)
+            python3 AIracers.py \
+                    -t $track \
+                    -b $bot \
+                    -a ${population},${roulette},${mutation},${elitism} \
+                    -c 1 learn &> /dev/null
+
+            score=$(grep Score: ga-best_w | awk '{print $2}')
 
             # update iteration counter
             ((iter+=5))
