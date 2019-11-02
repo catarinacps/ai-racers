@@ -23,10 +23,10 @@ class Controller(controller.Controller):
         f.write(weights)
         f.close()
 
-    def genetic_algorithm(self, weights, population_size=150, elitism=0.15):
+    def genetic_algorithm(self, weights, population_size=20, elitism=0.15, mutation_rate=0.2):
         roulette = 0.1
-        mutation_rate = 0.2
-        max_generations = 1  # 500
+        mutation_rate = 0.5
+        max_generations = 500
         max_same_best = 10
         perturbation_range = 0.5  # [-0.5,0.5]
 
@@ -110,7 +110,8 @@ class Controller(controller.Controller):
         fitness = []
 
         for individual in population:
-            fitness.append(self.run_episode(individual) + BIG_NUMBER)
+            #fitness.append(self.run_episode(individual) + BIG_NUMBER)
+            fitness.append(self.run_episode(individual))
 
         return fitness
 
@@ -122,7 +123,7 @@ class Controller(controller.Controller):
 
         fitness = [pool.apply(self.run_episode, args=(individual))
                    for individual in population]
-        fitness = [x + BIG_NUMBER for x in fitness]
+        #fitness = [x + BIG_NUMBER for x in fitness]
 
         return fitness
 
@@ -148,17 +149,23 @@ class Controller(controller.Controller):
         if (roulette != 0):
             # Select the next fraction by the roulette method
             num_from_roulette = round(roulette * len(population))
-            s = np.sum(fitness)
+
+            # avoiding too negative sum result
+            fitness_zero_shifted = fitness + abs(np.amin(fitness))
+            print("zero shifted:", fitness_zero_shifted)
+            s = np.sum(fitness_zero_shifted)
+            print("\n\ns", s)
 
             for _ in range(num_from_roulette):
                 r = np.random.randint(0,s)
                 t = 0
-                for i, score in enumerate(fitness):
+                for i, score in enumerate(fitness_zero_shifted):
                     t = t + score
                     if (t >= r):
                         drawn_from_roulette.append(population[i])   # get rouletted individual
                         population = np.delete(population, i, axis=0)   # can't be chosen more than once
                         fitness = np.delete(fitness, i, axis=0)   # can't be chosen more than once
+                        fitness_zero_shifted = np.delete(fitness_zero_shifted, i, axis=0)
                         break
 
             drawn_from_roulette = np.array(drawn_from_roulette)

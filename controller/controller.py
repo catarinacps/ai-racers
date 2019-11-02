@@ -129,7 +129,7 @@ class Controller(controller_template.Controller):
         Controller.save_result(self, best_weights, best_score)
         return best_weights
 
-    @classmethod
+
     def local_search(self, weights):
         raise NotImplementedError("This Method Must Be Implemented")
 
