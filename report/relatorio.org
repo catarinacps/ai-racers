@@ -43,10 +43,6 @@ chegou a pontuar em média etc pontos em todas as pistas.
 
 #+toc: headlines 5
 
-* Introdução
-
-\lipsum[1-1]
-
 * Algoritmos Implementados
 
 Dentre os variados algoritmos que nos foram apresentados tanto em aula quanto
@@ -95,11 +91,15 @@ def genetic_algorithm(self, weights, population_size=150, elitism=0.15):
 
 *** Geração da População
 
-Placeholder
+Geramos indivíduos através do sampling aleatório de valores relativos aos pesos,
+dentro do intervalo $(-1.0,1.0)$. Essa geração de indivíduos ocorre em paralelo,
+a fim de minimizar o tempo de iteração.
 
 *** Recombinação
 
-Placeholder
+Para a recombinação, utilizamos o método de recombinação uniforme aplicando uma
+máscara randômica. Ela é feita sobre dois indivíduos, a fim de gerar um novo
+indivíduo filho.
 
 *** Mutação
 
