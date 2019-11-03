@@ -23,7 +23,7 @@ from controller4.controller import Controller as Controller4
 import tracks_config as track
 
 
-# Competition score variabels
+# Competition score variables
 
 def play(track_name: str, b_type: str) -> None:
     """
