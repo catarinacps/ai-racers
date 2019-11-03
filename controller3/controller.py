@@ -1,6 +1,8 @@
 import numpy as np
 from datetime import datetime
 from controller import controller
+import pickle
+import os.path
 
 
 class Controller(controller.Controller):
@@ -12,7 +14,7 @@ class Controller(controller.Controller):
 
     def local_search(self, initial_weights):
 
-        return self.hill_climbing(initial_weights)
+        return self.hill_climbing_new(initial_weights)
 
     def save_result(self, weights, score):
 
@@ -23,12 +25,10 @@ class Controller(controller.Controller):
         f.write(weights)
         f.close()
 
+
     # Input initial weights, percentage perturbance
     # Output better weights
-
-    def hill_climbing(self, weights, num_neighbors = 8, dummy_param = 0, percentage=0.1):
-
-        # TODO: change the way we get neighbors!
+    def hill_climbing(self, weights, percentage=0.5):
 
         best_score = self.run_episode(weights)
         #best_parameters = [1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6]
@@ -37,6 +37,8 @@ class Controller(controller.Controller):
         iteration = 1
         improvement = best_score
         desespero = 1
+
+        
         while improvement > 0 or iteration <= max_iterations:
             print("\n[Iter ", iteration, "]")
             cur_score = best_score
@@ -65,6 +67,60 @@ class Controller(controller.Controller):
             improvement = best_score - cur_score
             if not changed:
                 desespero += 0.5
+        
+
+
+
+
+
+    def hill_climbing_new(self, weights, percentage=0.5):
+
+        if (os.path.exists('hc_previous_best.pkl')):
+            with open('hc_previous_best.pkl', 'rb') as parameters_file, open('hc_previous_info.pkl', 'rb') as info_file:
+                best_parameters = pickle.load(parameters_file)
+                best_score, iteration, improvement, desespero = pickle.load(info_file)
+
+        else:
+            best_parameters = weights
+            iteration = 1
+            best_score = self.run_episode(weights)
+            improvement = best_score
+            desespero = 1
+
+        
+        print("\n[Iter ", iteration, "]")
+        cur_score = best_score
+        cur_parameters = list(best_parameters)
+        changed = False
+
+        
+        # exhaustively generate neighbors based on input percentage
+        for i, w in enumerate(cur_parameters):
+            for sign in [1, -1]:
+
+                # neighbor is a small (positive or negative) perturbation in one weight
+                neighbor = list(best_parameters)
+                neighbor[i] += sign*percentage*desespero
+                new_score = self.run_episode(neighbor)
+
+                if new_score > best_score:
+                    changed = True
+                    desespero = 1
+                    best_score = new_score
+                    best_parameters = neighbor
+                    print("\n[Iter ", iteration, " Weight ", i, " Sign ",sign, "] New best: ", best_score)
+
+
+        iteration += 1
+        improvement = best_score - cur_score
+        if not changed:
+            desespero += 0.5
+        
+        with open('hc_previous_best.pkl', 'wb') as parameters_file:
+            pickle.dump(best_parameters, parameters_file)
+
+        with open('hc_previous_info.pkl', 'wb') as info_file:
+            pickle.dump([best_score, iteration, improvement, desespero], info_file)
 
         return best_parameters, best_score
 
