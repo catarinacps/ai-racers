@@ -134,11 +134,11 @@ class Controller(controller_template.Controller):
         raise NotImplementedError("This Method Must Be Implemented")
 
     def save_result(self, best_weights, best_score):
-        f = open(self.alias + "-" + "best_w", "w+")
+        f = open(self.alias + "_" + "iter_w", "w")
         f.write(datetime.now().strftime("%d/%m/%Y %H:%M:%S") + "\n")
         f.write(str(Controller.featureNames))
         f.write("\nScore: " + str(best_score) + "\n")
-        f.write(str(best_weights) + "\n\n")
+        f.write("\nWeights: " + ','.join(best_weights) + "\n\n")
         f.close()
 
     # vou deixar essa Coisa aqui ate achar um jeito pratico de usar
