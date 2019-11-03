@@ -31,6 +31,11 @@ class Controller(controller.Controller):
                           mutation_rate=0.2,
                           roulette=0.1):  # sori the line was huge
 
+        population_size = int(population_size)
+        elitism = float(elitism)
+        mutation_rate = float(mutation_rate)
+        roulette = float(roulette)
+
         max_same_best = 10
         perturbation_range = 0.5  # [-0.5,0.5]
 

@@ -224,7 +224,6 @@ if __name__ == '__main__':
         if not os.path.exists("./params"):
             os.makedirs("./params")
         output = "./params/%s.txt" % datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%d%H%M%S')
-        print(result)
         numpy.savetxt(output, result)
     elif str(args.mode) == 'comp':
         w_ctrl1 = numpy.loadtxt('controller1/weights.txt')
