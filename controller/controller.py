@@ -138,7 +138,7 @@ class Controller(controller_template.Controller):
         f.write(datetime.now().strftime("%d/%m/%Y %H:%M:%S") + "\n")
         f.write(str(Controller.featureNames))
         f.write("\nScore: " + str(best_score) + "\n")
-        f.write("\nWeights: " + ','.join(best_weights) + "\n\n")
+        f.write("\nWeights: " + ','.join([str(i) for i in best_weights]) + "\n\n")
         f.close()
 
     # vou deixar essa Coisa aqui ate achar um jeito pratico de usar

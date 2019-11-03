@@ -161,7 +161,7 @@ while read -r population roulette mutation elitism; do
             echo "--> Running with params: $population $roulette $mutation $elitism $bot $track"
 
             # run learning session
-            python3 code/AIracers.py \
+            python3 AIracers.py \
                     -t $track \
                     -b $bot \
                     -a ${population},${roulette},${mutation},${elitism} \

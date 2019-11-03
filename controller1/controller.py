@@ -1,5 +1,7 @@
 import numpy as np
 import multiprocessing as mp
+import pickle
+import os.path
 from datetime import datetime
 from controller import controller
 
@@ -29,56 +31,61 @@ class Controller(controller.Controller):
                           mutation_rate=0.2,
                           roulette=0.1):  # sori the line was huge
 
-        max_generations = 500
         max_same_best = 10
         perturbation_range = 0.5  # [-0.5,0.5]
 
-        population = self.generate_population_par(weights, population_size)
-        fitness = self.compute_fitness(population)
+        if (os.path.exists('ga_previous_pop.pkl')):
+            with open('ga_previous_pop.pkl', 'rb') as pop_file, open('ga_previous_info.pkl', 'rb') as info_file:
+                population = pickle.load(pop_file)
+                generation, same_best = pickle.load(info_file)
+        else:
+            population = self.generate_population_par(weights, population_size)
+            generation = 1
+            same_best = 0
 
-        generation = 1
-        same_best = 0
+        fitness = self.compute_fitness(population)
 
         best_idx = np.argmax(fitness)
         best_individual_prev = population[best_idx]
 
         greater_score_found = np.amax(fitness)
 
-        while generation <= max_generations:
+        if (fitness[best_idx] > greater_score_found):
+            greater_score_found = fitness[np.argmax(fitness)]
+            np.savetxt("best_genetic.txt", best_individual_prev)
 
-            if (fitness[best_idx] > greater_score_found):
-                greater_score_found = fitness[np.argmax(fitness)]
-                np.savetxt("best_genetic.txt", best_individual_prev)
+        print("\n\nGeneration:", generation)
+        print("Best population score:", fitness[best_idx])
+        print("Greater score found among generations:", greater_score_found)
+        print("\n\n")
 
-            print("\n\nGeneration:", generation)
-            print("Best population score:", fitness[best_idx])
-            print("Greater score found among generations:", greater_score_found)
-            print("\n\n")
+        population = self.select_population(population, fitness, elitism, roulette)
+        population = self.cross_population(population, population_size, mutation_rate, perturbation_range)
+        fitness = self.compute_fitness(population)
 
-            population = self.select_population(population, fitness, elitism, roulette)
-            population = self.cross_population(population, population_size, mutation_rate, perturbation_range)
-            fitness = self.compute_fitness(population)
+        generation += 1
 
-            generation += 1
+        best_idx = np.argmax(fitness)
+        best_individual = population[best_idx]
 
-            best_idx = np.argmax(fitness)
-            best_individual = population[best_idx]
+        if np.array_equal(best_individual, best_individual_prev):
+            same_best += 1
+            if same_best >= max_same_best:
+                print("Same individual found", same_best,
+                      "times. Learning algorithm stopped.")
+                return population[np.argmax(fitness)]
 
-            if np.array_equal(best_individual, best_individual_prev):
-                same_best += 1
-                if same_best >= max_same_best:
-                    print("Same individual found", same_best,
-                          "times. Learning algorithm stopped.")
-                    return population[np.argmax(fitness)]
+        else:
+            same_best = 0
 
-            else:
-                same_best = 0
+        with open('ga_previous_pop.pkl', 'wb') as pop_file:
+            pickle.dump(population, pop_file)
 
-            best_individual_prev = best_individual
+        with open('ga_previous_info.pkl', 'wb') as info_file:
+            pickle.dump([generation, same_best], info_file)
 
         print("Max generations reached. Learning algorithm stopped.")
         return population[np.argmax(fitness)], max(fitness)
-
 
     # Input parameters: list size of the current weights; number of individuals to be generated
     # Output returned: new set of weights, int score
