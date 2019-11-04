@@ -68,7 +68,7 @@ while read -r population roulette mutation elitism; do
                     -t $track \
                     -b $bot \
                     -a ${population},${roulette},${mutation},${elitism} \
-                    -c 1 learn &> /dev/null
+                    -c 1 learn
 
             score=$(grep 'Score:' ga_iter_w | awk '{print $2}' | cat)
             weights=$(grep 'Weights:' ga_iter_w | awk '{print $2}' | cat)
@@ -81,6 +81,9 @@ while read -r population roulette mutation elitism; do
             echo ${weights} >> $weights_csv
         done < $EXP_DIR/runs.plan
     done
+
+    # clean up current state so we start over again
+    rm *.pkl
 done < $EXP_DIR/ga.plan
 
 popd

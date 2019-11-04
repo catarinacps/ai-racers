@@ -68,7 +68,7 @@ while read -r sample_size top_percentage convergence_delta; do
                     -t $track \
                     -b $bot \
                     -a ${sample_size},${top_percentage},${convergence_delta} \
-                    -c 2 learn &> /dev/null
+                    -c 2 learn
 
             score=$(grep 'Score:' cma_iter_w | awk '{print $2}' | cat)
             weights=$(grep 'Weights:' cma_iter_w | awk '{print $2}' | cat)
@@ -81,6 +81,9 @@ while read -r sample_size top_percentage convergence_delta; do
             echo ${weights} >> $weights_csv
         done < $EXP_DIR/runs.plan
     done
+
+    # clean up current state so we start over again
+    rm *.pkl
 done < $EXP_DIR/cmaes.plan
 
 popd

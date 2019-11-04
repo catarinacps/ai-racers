@@ -67,7 +67,7 @@ while read -r percentage pop; do
                     -t $track \
                     -b $bot \
                     -a ${percentage} \
-                    -c 3 learn &> /dev/null
+                    -c 3 learn
 
             score=$(grep 'Score:' hc_iter_w | awk '{print $2}' | cat)
             weights=$(grep 'Weights:' hc_iter_w | awk '{print $2}' | cat)
@@ -80,6 +80,9 @@ while read -r percentage pop; do
             echo ${weights} >> $weights_csv
         done < $EXP_DIR/runs.plan
     done
+
+    # clean up current state so we start over again
+    rm *.pkl
 done < $EXP_DIR/hc.plan
 
 popd

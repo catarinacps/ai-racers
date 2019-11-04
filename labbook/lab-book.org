@@ -171,7 +171,7 @@ while read -r population roulette mutation elitism; do
                     -t $track \
                     -b $bot \
                     -a ${population},${roulette},${mutation},${elitism} \
-                    -c 1 learn &> /dev/null
+                    -c 1 learn
 
             score=$(grep 'Score:' ga_iter_w | awk '{print $2}' | cat)
             weights=$(grep 'Weights:' ga_iter_w | awk '{print $2}' | cat)
@@ -184,6 +184,9 @@ while read -r population roulette mutation elitism; do
             echo ${weights} >> $weights_csv
         done < $EXP_DIR/runs.plan
     done
+
+    # clean up current state so we start over again
+    rm *.pkl
 done < $EXP_DIR/ga.plan
 
 popd
@@ -200,10 +203,10 @@ rm -rf $SCRATCH/*
 *** Design
 
 #+begin_src R :session :results output :exports both
-populacao = c(5, 10, 20, 40, 80, 160, 320)
-sig = c(0.25, 0.35, 0.5, 0.65)
-top = c(0.1, 0.2, 0.3, 0.5)
-delta = c(0.001, 0.01, 0.02, 0.05, 0.1)
+populacao = c(5, 20, 80)
+sig = c(0.25, 0.5, 0.7)
+top = c(0.1, 0.3, 0.5)
+delta = c(0.01, 0.05, 0.1)
 
 fac.design(
   nfactors=4,
@@ -225,7 +228,7 @@ fac.design(
 #+end_src
 
 #+RESULTS:
-: creating full factorial with 560 runs ...
+: creating full factorial with 81 runs ...
 
 *** Script
 
@@ -302,7 +305,7 @@ while read -r sample_size top_percentage convergence_delta; do
                     -t $track \
                     -b $bot \
                     -a ${sample_size},${top_percentage},${convergence_delta} \
-                    -c 2 learn &> /dev/null
+                    -c 2 learn
 
             score=$(grep 'Score:' cma_iter_w | awk '{print $2}' | cat)
             weights=$(grep 'Weights:' cma_iter_w | awk '{print $2}' | cat)
@@ -315,6 +318,9 @@ while read -r sample_size top_percentage convergence_delta; do
             echo ${weights} >> $weights_csv
         done < $EXP_DIR/runs.plan
     done
+
+    # clean up current state so we start over again
+    rm *.pkl
 done < $EXP_DIR/cmaes.plan
 
 popd
@@ -428,7 +434,7 @@ while read -r percentage pop; do
                     -t $track \
                     -b $bot \
                     -a ${percentage} \
-                    -c 3 learn &> /dev/null
+                    -c 3 learn
 
             score=$(grep 'Score:' hc_iter_w | awk '{print $2}' | cat)
             weights=$(grep 'Weights:' hc_iter_w | awk '{print $2}' | cat)
@@ -441,6 +447,9 @@ while read -r percentage pop; do
             echo ${weights} >> $weights_csv
         done < $EXP_DIR/runs.plan
     done
+
+    # clean up current state so we start over again
+    rm *.pkl
 done < $EXP_DIR/hc.plan
 
 popd
