@@ -113,8 +113,10 @@ And here we have our script:
 
 set -euo pipefail
 
+HOST=$(hostname)
+
 # machine:
-MACHINE=${SLURMD_HOSTNAME}_${SLURM_CPUS_ON_NODE}
+MACHINE=${HOST}_${SLURM_CPUS_ON_NODE}
 
 # parameters:
 # the experiment ID, defined in the lab-book
@@ -122,10 +124,14 @@ EXP_ID=ga_ia_t1
 # the code directory
 CODE_DIR=$1
 # the experiment directory
-EXP_DIR=$2
+EXP_DIR=$CODE_DIR/labbook/experiments
 
 # experiment name (which is the ID and the machine and its core count)
 EXP_NAME=${EXP_ID}_${MACHINE}
+
+pip3 install --user pygame
+pip3 install --user image
+pip3 install --user numpy
 
 # go to the scratch dir
 cd $SCRATCH
@@ -161,7 +167,7 @@ while read -r population roulette mutation elitism; do
             echo "--> Running with params: $population $roulette $mutation $elitism $bot $track"
 
             # run learning session
-            python3 AIracers.py \
+            python3 AIRacers.py \
                     -t $track \
                     -b $bot \
                     -a ${population},${roulette},${mutation},${elitism} \
@@ -238,8 +244,10 @@ And here we have our script:
 
 set -euo pipefail
 
+HOST=$(hostname)
+
 # machine:
-MACHINE=${SLURMD_HOSTNAME}_${SLURM_CPUS_ON_NODE}
+MACHINE=${HOST}_${SLURM_CPUS_ON_NODE}
 
 # parameters:
 # the experiment ID, defined in the lab-book
@@ -247,10 +255,14 @@ EXP_ID=cmaes_ia_t1
 # the code directory
 CODE_DIR=$1
 # the experiment directory
-EXP_DIR=$2
+EXP_DIR=$CODE_DIR/labbook/experiments
 
 # experiment name (which is the ID and the machine and its core count)
 EXP_NAME=${EXP_ID}_${MACHINE}
+
+pip3 install --user pygame
+pip3 install --user image
+pip3 install --user numpy
 
 # go to the scratch dir
 cd $SCRATCH
@@ -286,7 +298,7 @@ while read -r sample_size top_percentage convergence_delta; do
             echo "--> Running with params: $sample_size $top_percentage $convergence_delta $bot $track"
 
             # run learning session
-            python3 AIracers.py \
+            python3 AIRacers.py \
                     -t $track \
                     -b $bot \
                     -a ${sample_size},${top_percentage},${convergence_delta} \
@@ -359,8 +371,10 @@ And here we have our script:
 
 set -euo pipefail
 
+HOST=$(hostname)
+
 # machine:
-MACHINE=${SLURMD_HOSTNAME}_${SLURM_CPUS_ON_NODE}
+MACHINE=${HOST}_${SLURM_CPUS_ON_NODE}
 
 # parameters:
 # the experiment ID, defined in the lab-book
@@ -368,10 +382,14 @@ EXP_ID=hc_ia_t1
 # the code directory
 CODE_DIR=$1
 # the experiment directory
-EXP_DIR=$2
+EXP_DIR=$CODE_DIR/labbook/experiments
 
 # experiment name (which is the ID and the machine and its core count)
 EXP_NAME=${EXP_ID}_${MACHINE}
+
+pip3 install --user pygame
+pip3 install --user image
+pip3 install --user numpy
 
 # go to the scratch dir
 cd $SCRATCH
@@ -407,7 +425,7 @@ while read -r percentage pop; do
             echo "--> Running with params: $percentage $bot $track"
 
             # run learning session
-            python3 AIracers.py \
+            python3 AIRacers.py \
                     -t $track \
                     -b $bot \
                     -a ${percentage} \
@@ -425,116 +443,6 @@ while read -r percentage pop; do
         done < $EXP_DIR/runs.plan
     done
 done < $EXP_DIR/hc.plan
-
-popd
-
-# pack everything and send to the exp dir
-tar czf $EXP_DIR/data/$EXP_NAME.tar.gz *
-
-popd
-rm -rf $SCRATCH/*
-#+end_src
-
-** Comparação
-
-*** Design
-
-#+begin_src R :session :results output :exports both
-num_vizinhos = c(5, 10, 20, 40, 80, 160, 320)
-eletismo = c(0.1, 0.15, 0.2, 0.25, 0.3)
-cntr = c('1', '2', '3', '4')
-
-fac.design(
-  nfactors=3,
-  replications=1,
-  repeat.only=FALSE,
-  blocks=1,
-  randomize=TRUE,
-  seed=46958,
-  factor.names=list(
-    controller=cntr,
-    neighbors=num_vizinhos,
-    elitism=eletismo)) %>%
-  as_tibble %>%
-  write_delim("experiments/combined.plan", delim=" ", col_names=FALSE)
-
-# the space delimited file is to help with the posterior parsing in the shell
-# script
-#+end_src
-
-#+RESULTS:
-: creating full factorial with 140 runs ...
-
-*** Script
-
-#+begin_src bash :shebang "#!/bin/bash" :exports both :tangle experiments/combined.slurm
-#SBATCH --time=72:00:00
-#SBATCH --chdir=.
-#SBATCH --partition=tupi
-#SBATCH --nodes=1
-#SBATCH --output=%x_%j.out
-#SBATCH --error=%x_%j.err
-#BATCH --mail-type=END,FAIL
-#BATCH --mail-user=hcpsilva@inf.ufrgs.br
-
-set -euo pipefail
-
-# machine:
-MACHINE=${SLURMD_HOSTNAME}_${SLURM_CPUS_ON_NODE}
-
-# parameters:
-# the experiment ID, defined in the lab-book
-EXP_ID=combined_ia_t1
-# the experiment directory
-EXP_DIR=$1
-
-# experiment name (which is the ID and the machine and its core count)
-EXP_NAME=${EXP_ID}_${MACHINE}
-
-# go to the scratch dir
-cd $SCRATCH
-
-# and clean everything
-rm -rf *
-
-# prepare our directory
-mkdir $EXP_NAME
-pushd $EXP_NAME
-
-# copy the code folder
-cp -r $(dirname $EXP_DIR) code
-mkdir results
-results_csv=$(readlink -f results/${EXP_NAME}_combined.csv)
-pushd code
-
-# init the csv results file
-echo "controller,neighbors,elitism,iteration,bot,track,score" > $results_csv
-
-# combined run
-while read -r controller neighbors elitism; do
-    iter=0
-    csv_line=${controller},${neighbors},${elitism}
-
-    for i in {1..6}; do
-        # each learning session will iterate 5 times
-        # each plan has 16 combinations
-        # therefore, we'll run 240 times
-
-        while read -r bot track; do
-            echo
-            echo "--> Running with params: $controller $neighbors $elitism $bot $track"
-
-            # run learning session
-            score=$(python3 AIracers.py -t $track -b $bot -a $neighbors $elitism -c $controller learn)
-
-            # update iteration counter
-            ((iter+=5))
-
-            # commit results to csv
-            echo ${csv_line},${iter},${bot},${track},${score} >> $results_csv
-        done < $EXP_DIR/runs.plan
-    done
-done < $EXP_DIR/combined.plan
 
 popd
 

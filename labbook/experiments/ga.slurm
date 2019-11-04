@@ -10,8 +10,10 @@
 
 set -euo pipefail
 
+HOST=$(hostname)
+
 # machine:
-MACHINE=${SLURMD_HOSTNAME}_${SLURM_CPUS_ON_NODE}
+MACHINE=${HOST}_${SLURM_CPUS_ON_NODE}
 
 # parameters:
 # the experiment ID, defined in the lab-book
@@ -19,10 +21,14 @@ EXP_ID=ga_ia_t1
 # the code directory
 CODE_DIR=$1
 # the experiment directory
-EXP_DIR=$2
+EXP_DIR=$CODE_DIR/labbook/experiments
 
 # experiment name (which is the ID and the machine and its core count)
 EXP_NAME=${EXP_ID}_${MACHINE}
+
+pip3 install --user pygame
+pip3 install --user image
+pip3 install --user numpy
 
 # go to the scratch dir
 cd $SCRATCH
@@ -58,7 +64,7 @@ while read -r population roulette mutation elitism; do
             echo "--> Running with params: $population $roulette $mutation $elitism $bot $track"
 
             # run learning session
-            python3 AIracers.py \
+            python3 AIRacers.py \
                     -t $track \
                     -b $bot \
                     -a ${population},${roulette},${mutation},${elitism} \
