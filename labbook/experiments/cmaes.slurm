@@ -74,7 +74,7 @@ while read -r sample_size top_percentage convergence_delta; do
             weights=$(grep 'Weights:' cma_iter_w | awk '{print $2}')
 
             # update iteration counter
-            ((iter++))
+            iter=$((iter++))
 
             # commit results to csv
             echo ${csv_line},${iter},${bot},${track},${score} >> $results_csv

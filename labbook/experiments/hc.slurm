@@ -74,7 +74,7 @@ while read -r percentage pop; do
             weights=$(grep 'Weights:' hc_iter_w | awk '{print $2}')
 
             # update iteration counter
-            ((iter++))
+            iter=$((iter++))
 
             # commit results to csv
             echo ${csv_line},${iter},${bot},${track},${score} >> $results_csv

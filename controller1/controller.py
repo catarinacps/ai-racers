@@ -40,20 +40,23 @@ class Controller(controller.Controller):
         perturbation_range = 0.5  # [-0.5,0.5]
 
         if (os.path.exists('ga_previous_pop.pkl')):
-            with open('ga_previous_pop.pkl', 'rb') as pop_file, open('ga_previous_info.pkl', 'rb') as info_file:
+            with open('ga_previous_pop.pkl', 'rb') as pop_file:
                 population = pickle.load(pop_file)
-                generation, same_best = pickle.load(info_file)
+            with open('ga_previous_info.pkl', 'rb') as info_file:
+                generation, same_best, greater_score_found = pickle.load(info_file)
+
+            fitness = self.compute_fitness(population)
+            best_idx = np.argmax(fitness)
+            best_individual_prev = population[best_idx]
         else:
             population = self.generate_population_par(weights, population_size)
             generation = 1
             same_best = 0
 
-        fitness = self.compute_fitness(population)
-
-        best_idx = np.argmax(fitness)
-        best_individual_prev = population[best_idx]
-
-        greater_score_found = np.amax(fitness)
+            fitness = self.compute_fitness(population)
+            best_idx = np.argmax(fitness)
+            best_individual_prev = population[best_idx]
+            greater_score_found = np.amax(fitness)
 
         if (fitness[best_idx] > greater_score_found):
             greater_score_found = fitness[np.argmax(fitness)]
@@ -85,9 +88,8 @@ class Controller(controller.Controller):
 
         with open('ga_previous_pop.pkl', 'wb') as pop_file:
             pickle.dump(population, pop_file)
-
         with open('ga_previous_info.pkl', 'wb') as info_file:
-            pickle.dump([generation, same_best], info_file)
+            pickle.dump([generation, same_best, greater_score_found], info_file)
 
         print("Max generations reached. Learning algorithm stopped.")
         return population[np.argmax(fitness)], max(fitness)
@@ -166,7 +168,7 @@ class Controller(controller.Controller):
 
             # avoiding too negative sum result
             fitness_zero_shifted = fitness + abs(np.amin(fitness))
-            s = np.sum(fitness_zero_shifted)
+            s = np.sum(fitness_zero_shifted) + 1
 
             for _ in range(num_from_roulette):
                 r = np.random.randint(0, s)
