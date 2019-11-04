@@ -70,10 +70,10 @@ fac.design(
 *** Design
 
 #+begin_src R :session :results output :exports both
-taxa_mutacao = c(0.05, 0.1, 0.15, 0.2, 0.25, 0.35)
-populacao = c(5, 10, 20, 40, 80, 160, 320)
-roleta = c(0.025, 0.05, 0.1, 0.15)
-eletismo = c(0.1, 0.15, 0.2, 0.25, 0.3)
+taxa_mutacao = c(0.1, 0.2, 0.5)
+populacao = c(20, 80, 160)
+roleta = c(0.05, 0.1, 0.15)
+eletismo = c(0.1, 0.2, 0.3)
 
 fac.design(
   nfactors=4,
@@ -95,7 +95,7 @@ fac.design(
 #+end_src
 
 #+RESULTS:
-: creating full factorial with 840 runs ...
+: creating full factorial with 81 runs ...
 
 *** Script
 
@@ -152,9 +152,9 @@ while read -r population roulette mutation elitism; do
     iter=0
     csv_line=${population},${roulette},${mutation},${elitism}
 
-    for i in {1..15}; do
+    for i in {1..6}; do
         # each plan has 16 combinations
-        # therefore, we'll run 240 times
+        # therefore, we'll run 96 times
 
         while read -r bot track; do
             echo
@@ -195,11 +195,12 @@ rm -rf $SCRATCH/*
 
 #+begin_src R :session :results output :exports both
 populacao = c(5, 10, 20, 40, 80, 160, 320)
+sig = c(0.25, 0.35, 0.5, 0.65)
 top = c(0.1, 0.2, 0.3, 0.5)
 delta = c(0.001, 0.01, 0.02, 0.05, 0.1)
 
 fac.design(
-  nfactors=3,
+  nfactors=4,
   replications=1,
   repeat.only=FALSE,
   blocks=1,
@@ -207,6 +208,7 @@ fac.design(
   seed=46958,
   factor.names=list(
     sample_size=populacao,
+    sigma=sig,
     top_percentage=top,
     convergence_delta=delta)) %>%
   as_tibble %>%
@@ -217,7 +219,7 @@ fac.design(
 #+end_src
 
 #+RESULTS:
-: creating full factorial with 140 runs ...
+: creating full factorial with 560 runs ...
 
 *** Script
 
@@ -262,6 +264,7 @@ pushd $EXP_NAME
 cp -r $(dirname $EXP_DIR) code
 mkdir results
 results_csv=$(readlink -f results/${EXP_NAME}.csv)
+weights_csv=$(readlink -f results/${EXP_NAME}_weights.csv)
 pushd code
 
 # init the csv results file
@@ -273,9 +276,8 @@ while read -r sample_size top_percentage convergence_delta; do
     csv_line=${sample_size},${top_percentage},${convergence_delta}
 
     for i in {1..6}; do
-        # each learning session will iterate 5 times
         # each plan has 16 combinations
-        # therefore, we'll run 240 times
+        # therefore, we'll run 96 times
 
         while read -r bot track; do
             echo
@@ -288,16 +290,137 @@ while read -r sample_size top_percentage convergence_delta; do
                     -a ${sample_size},${top_percentage},${convergence_delta} \
                     -c 2 learn &> /dev/null
 
-            score=$(grep Score: cma-best_w | awk '{print $2}')
+            score=$(grep 'Score:' cma_iter_w | awk '{print $2}')
+            weights=$(grep 'Weights:' cma_iter_w | awk '{print $2}')
 
             # update iteration counter
-            ((iter+=5))
+            ((iter++))
 
             # commit results to csv
             echo ${csv_line},${iter},${bot},${track},${score} >> $results_csv
+            echo ${weights} >> $weights_csv
         done < $EXP_DIR/runs.plan
     done
 done < $EXP_DIR/cmaes.plan
+
+popd
+
+# pack everything and send to the exp dir
+tar czf $EXP_DIR/data/$EXP_NAME.tar.gz *
+
+popd
+rm -rf $SCRATCH/*
+#+end_src
+
+** Hill Climbing
+
+*** Design
+
+#+begin_src R :session :results output :exports both
+per = c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7)
+pop = c(8, 16)
+
+fac.design(
+  nfactors=2,
+  replications=1,
+  repeat.only=FALSE,
+  blocks=1,
+  randomize=TRUE,
+  seed=46958,
+  factor.names=list(
+    population=pop,
+    percentage=per)) %>%
+  as_tibble %>%
+  write_delim("experiments/hc.plan", delim=" ", col_names=FALSE)
+
+# the space delimited file is to help with the posterior parsing in the shell
+# script
+#+end_src
+
+#+RESULTS:
+: creating full factorial with 14 runs ...
+
+*** Script
+
+And here we have our script:
+
+
+#+begin_src bash :shebang "#!/bin/bash" :exports both :tangle experiments/hc.slurm
+#SBATCH --time=72:00:00
+#SBATCH --chdir=.
+#SBATCH --partition=tupi
+#SBATCH --nodes=1
+#SBATCH --output=%x_%j.out
+#SBATCH --error=%x_%j.err
+#BATCH --mail-type=END,FAIL
+#BATCH --mail-user=hcpsilva@inf.ufrgs.br
+
+set -euo pipefail
+
+# machine:
+MACHINE=${SLURMD_HOSTNAME}_${SLURM_CPUS_ON_NODE}
+
+# parameters:
+# the experiment ID, defined in the lab-book
+EXP_ID=hc_ia_t1
+# the experiment directory
+EXP_DIR=$1
+
+# experiment name (which is the ID and the machine and its core count)
+EXP_NAME=${EXP_ID}_${MACHINE}
+
+# go to the scratch dir
+cd $SCRATCH
+
+# and clean everything
+rm -rf *
+
+# prepare our directory
+mkdir $EXP_NAME
+pushd $EXP_NAME
+
+# copy the code folder
+cp -r $(dirname $EXP_DIR) code
+mkdir results
+results_csv=$(readlink -f results/${EXP_NAME}.csv)
+weights_csv=$(readlink -f results/${EXP_NAME}_weights.csv)
+pushd code
+
+# init the csv results file
+echo "percentage,iteration,bot,track,score" > $results_csv
+
+# genetic algorithms
+while read -r percentage pop; do
+    iter=0
+    csv_line=${percentage}
+
+    for i in {1..6}; do
+        # each plan has 16 combinations
+        # therefore, we'll run 96 times
+
+        while read -r bot track; do
+            echo
+            echo "--> Running with params: $percentage $bot $track"
+
+            # run learning session
+            python3 AIracers.py \
+                    -t $track \
+                    -b $bot \
+                    -a ${percentage} \
+                    -c 3 learn &> /dev/null
+
+            score=$(grep 'Score:' hc_iter_w | awk '{print $2}')
+            weights=$(grep 'Weights:' hc_iter_w | awk '{print $2}')
+
+            # update iteration counter
+            ((iter++))
+
+            # commit results to csv
+            echo ${csv_line},${iter},${bot},${track},${score} >> $results_csv
+            echo ${weights} >> $weights_csv
+        done < $EXP_DIR/runs.plan
+    done
+done < $EXP_DIR/hc.plan
 
 popd
 

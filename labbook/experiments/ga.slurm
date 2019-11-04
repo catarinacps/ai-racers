@@ -49,16 +49,16 @@ while read -r population roulette mutation elitism; do
     iter=0
     csv_line=${population},${roulette},${mutation},${elitism}
 
-    for i in {1..15}; do
+    for i in {1..6}; do
         # each plan has 16 combinations
-        # therefore, we'll run 240 times
+        # therefore, we'll run 96 times
 
         while read -r bot track; do
             echo
             echo "--> Running with params: $population $roulette $mutation $elitism $bot $track"
 
             # run learning session
-            python3 code/AIracers.py \
+            python3 AIracers.py \
                     -t $track \
                     -b $bot \
                     -a ${population},${roulette},${mutation},${elitism} \

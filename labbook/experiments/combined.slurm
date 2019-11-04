@@ -15,7 +15,7 @@ MACHINE=${SLURMD_HOSTNAME}_${SLURM_CPUS_ON_NODE}
 
 # parameters:
 # the experiment ID, defined in the lab-book
-EXP_ID=cmaes_ia_t1
+EXP_ID=combined_ia_t1
 # the experiment directory
 EXP_DIR=$1
 
@@ -35,45 +35,37 @@ pushd $EXP_NAME
 # copy the code folder
 cp -r $(dirname $EXP_DIR) code
 mkdir results
-results_csv=$(readlink -f results/${EXP_NAME}.csv)
-weights_csv=$(readlink -f results/${EXP_NAME}_weights.csv)
+results_csv=$(readlink -f results/${EXP_NAME}_combined.csv)
 pushd code
 
 # init the csv results file
-echo "sample_size,top_percentage,convergence_delta,iteration,bot,track,score" > $results_csv
+echo "controller,neighbors,elitism,iteration,bot,track,score" > $results_csv
 
-# genetic algorithms
-while read -r sample_size top_percentage convergence_delta; do
+# combined run
+while read -r controller neighbors elitism; do
     iter=0
-    csv_line=${sample_size},${top_percentage},${convergence_delta}
+    csv_line=${controller},${neighbors},${elitism}
 
     for i in {1..6}; do
+        # each learning session will iterate 5 times
         # each plan has 16 combinations
-        # therefore, we'll run 96 times
+        # therefore, we'll run 240 times
 
         while read -r bot track; do
             echo
-            echo "--> Running with params: $sample_size $top_percentage $convergence_delta $bot $track"
+            echo "--> Running with params: $controller $neighbors $elitism $bot $track"
 
             # run learning session
-            python3 AIracers.py \
-                    -t $track \
-                    -b $bot \
-                    -a ${sample_size},${top_percentage},${convergence_delta} \
-                    -c 2 learn &> /dev/null
-
-            score=$(grep 'Score:' cma_iter_w | awk '{print $2}')
-            weights=$(grep 'Weights:' cma_iter_w | awk '{print $2}')
+            score=$(python3 AIracers.py -t $track -b $bot -a $neighbors $elitism -c $controller learn)
 
             # update iteration counter
-            ((iter++))
+            ((iter+=5))
 
             # commit results to csv
             echo ${csv_line},${iter},${bot},${track},${score} >> $results_csv
-            echo ${weights} >> $weights_csv
         done < $EXP_DIR/runs.plan
     done
-done < $EXP_DIR/cmaes.plan
+done < $EXP_DIR/combined.plan
 
 popd
 

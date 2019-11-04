@@ -15,7 +15,7 @@ MACHINE=${SLURMD_HOSTNAME}_${SLURM_CPUS_ON_NODE}
 
 # parameters:
 # the experiment ID, defined in the lab-book
-EXP_ID=cmaes_ia_t1
+EXP_ID=hc_ia_t1
 # the experiment directory
 EXP_DIR=$1
 
@@ -40,12 +40,12 @@ weights_csv=$(readlink -f results/${EXP_NAME}_weights.csv)
 pushd code
 
 # init the csv results file
-echo "sample_size,top_percentage,convergence_delta,iteration,bot,track,score" > $results_csv
+echo "percentage,iteration,bot,track,score" > $results_csv
 
 # genetic algorithms
-while read -r sample_size top_percentage convergence_delta; do
+while read -r percentage pop; do
     iter=0
-    csv_line=${sample_size},${top_percentage},${convergence_delta}
+    csv_line=${percentage}
 
     for i in {1..6}; do
         # each plan has 16 combinations
@@ -53,17 +53,17 @@ while read -r sample_size top_percentage convergence_delta; do
 
         while read -r bot track; do
             echo
-            echo "--> Running with params: $sample_size $top_percentage $convergence_delta $bot $track"
+            echo "--> Running with params: $percentage $bot $track"
 
             # run learning session
             python3 AIracers.py \
                     -t $track \
                     -b $bot \
-                    -a ${sample_size},${top_percentage},${convergence_delta} \
-                    -c 2 learn &> /dev/null
+                    -a ${percentage} \
+                    -c 3 learn &> /dev/null
 
-            score=$(grep 'Score:' cma_iter_w | awk '{print $2}')
-            weights=$(grep 'Weights:' cma_iter_w | awk '{print $2}')
+            score=$(grep 'Score:' hc_iter_w | awk '{print $2}')
+            weights=$(grep 'Weights:' hc_iter_w | awk '{print $2}')
 
             # update iteration counter
             ((iter++))
@@ -73,7 +73,7 @@ while read -r sample_size top_percentage convergence_delta; do
             echo ${weights} >> $weights_csv
         done < $EXP_DIR/runs.plan
     done
-done < $EXP_DIR/cmaes.plan
+done < $EXP_DIR/hc.plan
 
 popd
 
