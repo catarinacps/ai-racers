@@ -70,8 +70,8 @@ while read -r population roulette mutation elitism; do
                     -a ${population},${roulette},${mutation},${elitism} \
                     -c 1 learn &> /dev/null
 
-            score=$(grep 'Score:' ga_iter_w | awk '{print $2}')
-            weights=$(grep 'Weights:' ga_iter_w | awk '{print $2}')
+            score=$(grep 'Score:' ga_iter_w | awk '{print $2}' | cat)
+            weights=$(grep 'Weights:' ga_iter_w | awk '{print $2}' | cat)
 
             # update iteration counter
             iter=$((iter++))

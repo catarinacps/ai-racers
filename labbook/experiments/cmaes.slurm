@@ -70,11 +70,11 @@ while read -r sample_size top_percentage convergence_delta; do
                     -a ${sample_size},${top_percentage},${convergence_delta} \
                     -c 2 learn &> /dev/null
 
-            score=$(grep 'Score:' cma_iter_w | awk '{print $2}')
-            weights=$(grep 'Weights:' cma_iter_w | awk '{print $2}')
+            score=$(grep 'Score:' cma_iter_w | awk '{print $2}' | cat)
+            weights=$(grep 'Weights:' cma_iter_w | awk '{print $2}' | cat)
 
             # update iteration counter
-            iter=$((iter++))
+            iter=$((iter+1))
 
             # commit results to csv
             echo ${csv_line},${iter},${bot},${track},${score} >> $results_csv

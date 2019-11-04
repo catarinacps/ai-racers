@@ -48,12 +48,11 @@ weights_csv=$(readlink -f results/${EXP_NAME}_weights.csv)
 pushd code
 
 # init the csv results file
-echo "percentageiteration,bot,track,score" > $results_csv
+echo "percentage,iteration,bot,track,score" > $results_csv
 
 # genetic algorithms
 while read -r percentage pop; do
     iter=0
-    csv_line=${percentage}
 
     for i in {1..6}; do
         # each plan has 16 combinations
@@ -70,14 +69,14 @@ while read -r percentage pop; do
                     -a ${percentage} \
                     -c 3 learn &> /dev/null
 
-            score=$(grep 'Score:' hc_iter_w | awk '{print $2}')
-            weights=$(grep 'Weights:' hc_iter_w | awk '{print $2}')
+            score=$(grep 'Score:' hc_iter_w | awk '{print $2}' | cat)
+            weights=$(grep 'Weights:' hc_iter_w | awk '{print $2}' | cat)
 
             # update iteration counter
-            iter=$((iter++))
+            iter=$((iter+1))
 
             # commit results to csv
-            echo ${csv_line},${iter},${bot},${track},${score} >> $results_csv
+            echo ${percentage},${iter},${bot},${track},${score} >> $results_csv
             echo ${weights} >> $weights_csv
         done < $EXP_DIR/runs.plan
     done
