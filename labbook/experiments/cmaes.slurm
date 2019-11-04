@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --time=72:00:00
 #SBATCH --chdir=.
-#SBATCH --partition=tupi
+#SBATCH --partition=cei
 #SBATCH --nodes=1
 #SBATCH --output=%x_%j.out
 #SBATCH --error=%x_%j.err

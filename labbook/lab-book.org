@@ -104,7 +104,7 @@ And here we have our script:
 #+begin_src bash :shebang "#!/bin/bash" :exports both :tangle experiments/ga.slurm
 #SBATCH --time=72:00:00
 #SBATCH --chdir=.
-#SBATCH --partition=tupi
+#SBATCH --partition=cei
 #SBATCH --nodes=1
 #SBATCH --output=%x_%j.out
 #SBATCH --error=%x_%j.err
@@ -235,7 +235,7 @@ And here we have our script:
 #+begin_src bash :shebang "#!/bin/bash" :exports both :tangle experiments/cmaes.slurm
 #SBATCH --time=72:00:00
 #SBATCH --chdir=.
-#SBATCH --partition=tupi
+#SBATCH --partition=cei
 #SBATCH --nodes=1
 #SBATCH --output=%x_%j.out
 #SBATCH --error=%x_%j.err
@@ -362,7 +362,7 @@ And here we have our script:
 #+begin_src bash :shebang "#!/bin/bash" :exports both :tangle experiments/hc.slurm
 #SBATCH --time=72:00:00
 #SBATCH --chdir=.
-#SBATCH --partition=tupi
+#SBATCH --partition=cei
 #SBATCH --nodes=1
 #SBATCH --output=%x_%j.out
 #SBATCH --error=%x_%j.err
