@@ -23,9 +23,6 @@ EXP_NAME=${EXP_ID}_${MACHINE}
 # go to the scratch dir
 cd $SCRATCH
 
-# and clean everything
-rm -rf *
-
 # prepare our directory
 mkdir $EXP_NAME
 pushd $EXP_NAME
@@ -72,7 +69,7 @@ while read -r percentage pop; do
     done
 
     # clean up current state so we start over again
-    rm *.pkl
+    rm hc*.pkl
 done < $EXP_DIR/hc.plan
 
 popd
@@ -81,4 +78,3 @@ popd
 tar czf $EXP_DIR/data/$EXP_NAME.tar.gz *
 
 popd
-rm -rf $SCRATCH/*

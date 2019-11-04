@@ -23,9 +23,6 @@ EXP_NAME=${EXP_ID}_${MACHINE}
 # go to the scratch dir
 cd $SCRATCH
 
-# and clean everything
-rm -rf *
-
 # prepare our directory
 mkdir $EXP_NAME
 pushd $EXP_NAME
@@ -73,7 +70,7 @@ while read -r population mutation elitism; do
     done
 
     # clean up current state so we start over again
-    rm *.pkl
+    rm ga*.pkl
 done < $EXP_DIR/ga.plan
 
 popd
@@ -82,4 +79,3 @@ popd
 tar czf $EXP_DIR/data/$EXP_NAME.tar.gz *
 
 popd
-rm -rf $SCRATCH/*

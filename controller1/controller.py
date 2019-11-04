@@ -5,6 +5,20 @@ import os.path
 from datetime import datetime
 from controller import controller
 
+def cross_individual(population, mask):
+    dad1_idx = np.random.randint(0, len(population))
+    dad2_idx = np.random.randint(0, len(population))
+    dad1 = population[dad1_idx]
+    dad2 = population[dad2_idx]
+    son = []
+
+    for i, gene in enumerate(mask):
+        if gene == 0:
+            son.append(dad1[i])
+        else:
+            son.append(dad2[i])
+
+    return np.array(son)
 
 class Controller(controller.Controller):
     def __init__(self, track, evaluate=True, bot_type=None):
@@ -191,28 +205,34 @@ class Controller(controller.Controller):
     # Input parameters: list of individual solutions; list of maximum individuals
     # Output returned: new population
     def cross_population(self, population, population_size, mutation_rate, perturbation_range):
-        missing_population = []
         num_missing_individuals = population_size - len(population)
+        missing_population = [None] * num_missing_individuals
 
         mask = np.random.randint(0, 2, size=population.shape[1])
         # mask example for a problem with 5 weights [0,1,1,0,1]
         # Note that, here, each weight is the gene of the chromossome (instead of bits)
 
-        for _ in range(num_missing_individuals):
-            dad1_idx = np.random.randint(0, len(population))
-            dad2_idx = np.random.randint(0, len(population))
-            dad1 = population[dad1_idx]
-            dad2 = population[dad2_idx]
-            son = []
+        pool = mp.Pool(mp.cpu_count())
 
-            for i, gene in enumerate(mask):
-                if gene == 0:
-                    son.append(dad1[i])
-                else:
-                    son.append(dad2[i])
+        missing_population = [
+            pool.apply(cross_individual, (np.array(population), mask,))
+            for _ in range(num_missing_individuals)]
 
-            son = np.array(son)
-            missing_population.append(son)
+        # for _ in range(num_missing_individuals):
+        #     dad1_idx = np.random.randint(0, len(population))
+        #     dad2_idx = np.random.randint(0, len(population))
+        #     dad1 = population[dad1_idx]
+        #     dad2 = population[dad2_idx]
+        #     son = []
+
+        #     for i, gene in enumerate(mask):
+        #         if gene == 0:
+        #             son.append(dad1[i])
+        #         else:
+        #             son.append(dad2[i])
+
+        #     son = np.array(son)
+        #     missing_population.append(son)
 
         missing_population = np.array(missing_population)
         missing_population = self.mutate_population(missing_population, mutation_rate, perturbation_range)
