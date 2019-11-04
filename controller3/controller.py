@@ -12,9 +12,9 @@ class Controller(controller.Controller):
         self.algorithm = "Hill Climbing"
         self.alias = "hc"
 
-    def local_search(self, initial_weights):
+    def local_search(self, initial_weights, *argv):
 
-        return self.hill_climbing_new(initial_weights)
+        return self.hill_climbing_new(initial_weights, *argv)
 
     def save_result(self, weights, score):
 

@@ -12,9 +12,9 @@ class Controller(controller.Controller):
         self.algorithm = "Genetic Algorithm"
         self.alias = "ga"
 
-    def local_search(self, initial_weights):
+    def local_search(self, initial_weights, *argv):
 
-        return self.genetic_algorithm(initial_weights)
+        return self.genetic_algorithm(initial_weights, *argv)
 
     def save_result(self, weights, score):
         f = open(self.alias + "-" + "best_w", "w+")
