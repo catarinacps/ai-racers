@@ -16,8 +16,10 @@ MACHINE=${SLURMD_HOSTNAME}_${SLURM_CPUS_ON_NODE}
 # parameters:
 # the experiment ID, defined in the lab-book
 EXP_ID=hc_ia_t1
+# the code directory
+CODE_DIR=$1
 # the experiment directory
-EXP_DIR=$1
+EXP_DIR=$2
 
 # experiment name (which is the ID and the machine and its core count)
 EXP_NAME=${EXP_ID}_${MACHINE}
@@ -33,14 +35,14 @@ mkdir $EXP_NAME
 pushd $EXP_NAME
 
 # copy the code folder
-cp -r $(dirname $EXP_DIR) code
+cp -r $CODE_DIR code
 mkdir results
 results_csv=$(readlink -f results/${EXP_NAME}.csv)
 weights_csv=$(readlink -f results/${EXP_NAME}_weights.csv)
 pushd code
 
 # init the csv results file
-echo "percentage,iteration,bot,track,score" > $results_csv
+echo "percentageiteration,bot,track,score" > $results_csv
 
 # genetic algorithms
 while read -r percentage pop; do
