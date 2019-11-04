@@ -51,23 +51,23 @@ pushd code
 echo "sample_size,top_percentage,convergence_delta,iteration,bot,track,score" > $results_csv
 
 # genetic algorithms
-while read -r sample_size top_percentage convergence_delta; do
+while read -r sample_size sigma top_percentage convergence_delta; do
     iter=0
-    csv_line=${sample_size},${top_percentage},${convergence_delta}
+    csv_line=${sample_size},${sigma},${top_percentage},${convergence_delta}
 
-    for i in {1..6}; do
+    for i in {1..4}; do
         # each plan has 16 combinations
         # therefore, we'll run 96 times
 
         while read -r bot track; do
             echo
-            echo "--> Running with params: $sample_size $top_percentage $convergence_delta $bot $track"
+            echo "--> Running with params: $sample_size $sigma $top_percentage $convergence_delta $bot $track"
 
             # run learning session
             python3 AIRacers.py \
                     -t $track \
                     -b $bot \
-                    -a ${sample_size},${top_percentage},${convergence_delta} \
+                    -a ${sample_size},${sigma},${top_percentage},${convergence_delta} \
                     -c 2 learn
 
             score=$(grep 'Score:' cma_iter_w | awk '{print $2}' | cat)

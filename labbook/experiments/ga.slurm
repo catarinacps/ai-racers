@@ -48,26 +48,26 @@ weights_csv=$(readlink -f results/${EXP_NAME}_weights.csv)
 pushd code
 
 # init the csv results file
-echo "population,roulette,mutation,elitism,iteration,bot,track,score" > $results_csv
+echo "population,mutation,elitism,iteration,bot,track,score" > $results_csv
 
 # genetic algorithms
-while read -r population roulette mutation elitism; do
+while read -r population mutation elitism; do
     iter=0
-    csv_line=${population},${roulette},${mutation},${elitism}
+    csv_line=${population},${mutation},${elitism}
 
-    for i in {1..6}; do
+    for i in {1..4}; do
         # each plan has 16 combinations
         # therefore, we'll run 96 times
 
         while read -r bot track; do
             echo
-            echo "--> Running with params: $population $roulette $mutation $elitism $bot $track"
+            echo "--> Running with params: $population $mutation $elitism $bot $track"
 
             # run learning session
             python3 AIRacers.py \
                     -t $track \
                     -b $bot \
-                    -a ${population},${roulette},${mutation},${elitism} \
+                    -a ${population},${mutation},${elitism} \
                     -c 1 learn
 
             score=$(grep 'Score:' ga_iter_w | awk '{print $2}' | cat)

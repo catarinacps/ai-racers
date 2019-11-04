@@ -69,14 +69,13 @@ fac.design(
 
 *** Design
 
-#+begin_src R :session :results output :exports both
-taxa_mutacao = c(0.1, 0.2, 0.5)
-populacao = c(20, 80, 160)
-roleta = c(0.05, 0.1, 0.15)
+#+begin_src R :session :results output
+populacao = c(20, 80, 110)
+taxa_mutacao = c(0.1, 0.25, 0.5)
 eletismo = c(0.1, 0.2, 0.3)
 
 fac.design(
-  nfactors=4,
+  nfactors=3,
   replications=1,
   repeat.only=FALSE,
   blocks=1,
@@ -84,7 +83,6 @@ fac.design(
   seed=46958,
   factor.names=list(
     neighbors=populacao,
-    roulette=roleta,
     mutation=taxa_mutacao,
     elitism=eletismo)) %>%
   as_tibble %>%
@@ -95,7 +93,8 @@ fac.design(
 #+end_src
 
 #+RESULTS:
-: creating full factorial with 81 runs ...
+:
+: creating full factorial with 27 runs ...
 
 *** Script
 
@@ -151,26 +150,26 @@ weights_csv=$(readlink -f results/${EXP_NAME}_weights.csv)
 pushd code
 
 # init the csv results file
-echo "population,roulette,mutation,elitism,iteration,bot,track,score" > $results_csv
+echo "population,mutation,elitism,iteration,bot,track,score" > $results_csv
 
 # genetic algorithms
-while read -r population roulette mutation elitism; do
+while read -r population mutation elitism; do
     iter=0
-    csv_line=${population},${roulette},${mutation},${elitism}
+    csv_line=${population},${mutation},${elitism}
 
-    for i in {1..6}; do
+    for i in {1..4}; do
         # each plan has 16 combinations
         # therefore, we'll run 96 times
 
         while read -r bot track; do
             echo
-            echo "--> Running with params: $population $roulette $mutation $elitism $bot $track"
+            echo "--> Running with params: $population $mutation $elitism $bot $track"
 
             # run learning session
             python3 AIRacers.py \
                     -t $track \
                     -b $bot \
-                    -a ${population},${roulette},${mutation},${elitism} \
+                    -a ${population},${mutation},${elitism} \
                     -c 1 learn
 
             score=$(grep 'Score:' ga_iter_w | awk '{print $2}' | cat)
@@ -288,23 +287,23 @@ pushd code
 echo "sample_size,top_percentage,convergence_delta,iteration,bot,track,score" > $results_csv
 
 # genetic algorithms
-while read -r sample_size top_percentage convergence_delta; do
+while read -r sample_size sigma top_percentage convergence_delta; do
     iter=0
-    csv_line=${sample_size},${top_percentage},${convergence_delta}
+    csv_line=${sample_size},${sigma},${top_percentage},${convergence_delta}
 
-    for i in {1..6}; do
+    for i in {1..4}; do
         # each plan has 16 combinations
         # therefore, we'll run 96 times
 
         while read -r bot track; do
             echo
-            echo "--> Running with params: $sample_size $top_percentage $convergence_delta $bot $track"
+            echo "--> Running with params: $sample_size $sigma $top_percentage $convergence_delta $bot $track"
 
             # run learning session
             python3 AIRacers.py \
                     -t $track \
                     -b $bot \
-                    -a ${sample_size},${top_percentage},${convergence_delta} \
+                    -a ${sample_size},${sigma},${top_percentage},${convergence_delta} \
                     -c 2 learn
 
             score=$(grep 'Score:' cma_iter_w | awk '{print $2}' | cat)
@@ -421,7 +420,7 @@ echo "percentage,iteration,bot,track,score" > $results_csv
 while read -r percentage pop; do
     iter=0
 
-    for i in {1..6}; do
+    for i in {1..4}; do
         # each plan has 16 combinations
         # therefore, we'll run 96 times
 

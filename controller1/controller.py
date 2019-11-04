@@ -27,8 +27,8 @@ class Controller(controller.Controller):
     def genetic_algorithm(self,
                           weights,
                           population_size=100,
-                          elitism=0.15,
                           mutation_rate=0.2,
+                          elitism=0.15,
                           roulette=0.1):  # sori the line was huge
 
         population_size = int(population_size)

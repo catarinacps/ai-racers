@@ -54,7 +54,7 @@ echo "percentage,iteration,bot,track,score" > $results_csv
 while read -r percentage pop; do
     iter=0
 
-    for i in {1..6}; do
+    for i in {1..4}; do
         # each plan has 16 combinations
         # therefore, we'll run 96 times
 
