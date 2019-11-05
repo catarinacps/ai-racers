@@ -61,7 +61,7 @@ while read -r population mutation elitism; do
             weights=$(grep 'Weights:' ga_iter_w | awk '{print $2}' | cat)
 
             # update iteration counter
-            iter=$((iter++))
+            iter=$((iter+1))
 
             # commit results to csvs
             echo ${csv_line},${iter},${bot},${track},${score} >> $results_csv
