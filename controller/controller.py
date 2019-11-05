@@ -1,6 +1,7 @@
 import controller_template as controller_template
 import numpy as np
 from datetime import datetime
+from math import sin
 
 # Pretend these are constant indexes for sensors[]
 DIST_LEFT = 0
@@ -20,8 +21,8 @@ class Controller(controller_template.Controller):
     sensors = [0, 0, 0, 0, 0, 0, 0, 0, 0]
     prev_st = [0, 0, 0, 0, 0, 0.1, 0, 0, 0]
     prev_score = -1000
-    features = [1, 0, 0, 0, 0, 0]
-    featureNames = ["Const", "diffCheckpoint", "riskHead", "riskLeft", "riskRight", "centralized"]
+    features = [1, 0, 0, 0, 0]
+    featureNames =  ["Const", "diffCheckpoint", "outOfCenter", "needForSpeed", "enemyThreat"]
     num_features = len(features)
 
     def __init__(self, track, evaluate=True, bot_type=None):
@@ -73,47 +74,45 @@ class Controller(controller_template.Controller):
         """
 
         diffCheckpoint = st[DIST_CHECKPOINT] - self.prev_st[DIST_CHECKPOINT]
-        diffCheckpoint = diffCheckpoint * 2 / 1000
-        # times 2 cause it is double important
+        diffCheckpoint = diffCheckpoint/1000
 
-        # goal to minimize getting on grass.
-        # if not on track, adds spoiler constant.
-        riskHeadCollision = (1 - st[ON_TRACK]) * 250 + (st[SPEED] / st[DIST_CENTER]) * 1.5
-        # 250 and not 200 to say that head collision is worse than right/left
-        # the same logic goes to the "1.5"
 
-        # without considering the constants multiplication:
-        # max value: 200 + 10/1 = 210
-        # min value: 0 + 10/100 = 1/10 = 0.1
-        riskHeadCollision = (riskHeadCollision - 0.1) / 209.9  # normalized
+        outOfCenter = (st[DIST_LEFT] - st[DIST_RIGHT]) / 100
+        # left - right
+        # if closer to left margin, negative number -> turn right
+        # if on left side GRASS, distLeft will be a positive value X
+        # and distRight will be a positive value 100+X
+        # yielding a maximum value of -100 or +100
+        # therefore divide by 100 to get range [-1,1]
+        # the bigger the difference, the sharper the need for turning right or left
+        # this can be softened with some log function so that being closer to center
+        # doesnt provoke a linear need to turn (sublinear in comparison to being on grass)
 
-        riskLeftCollision = (1 - st[ON_TRACK]) * 200 + (st[SPEED] / st[DIST_LEFT])
-        riskLeftCollision = (riskLeftCollision - 0.1) / 209.9
+        needForSpeed = st[SPEED] / (1+st[DIST_CENTER])
+        needForSpeed = (needForSpeed - 200.0/2 - 10/101/2)/99.95
 
-        riskRightCollision = (1 - st[ON_TRACK]) * 200 + (st[SPEED] / st[DIST_RIGHT])
-        riskRightCollision = (riskRightCollision - 0.1) / 209.9
+        # centralize the parameter around 0 for range [-99.95, 99.95]
+        # divide by that value to get [-1,1]
 
-        centralizedPosition = (abs(st[DIST_LEFT] - st[DIST_RIGHT]) * -1) + 99
-        # max: 0 * -1 + 99 = 99
-        # min: |100 - 1| * -1 + 99 = 0
-        centralizedPosition = centralizedPosition / 99
+        if st[ENEMY_NEAR] == 1:
+            enemyThreat = abs(sin(st[ENEMY_ANGLE])) * (1+st[DIST_ENEMY])
+            enemyThreat = enemyThreat / 101
+        else:
+            enemyThreat = 0
 
-        # if (self.game_state.car1.score > self.prev_score)
-        # depois vejo como lidar quando cruza checkpoint
-        # maximize potential travel distance fulfilled
-        # speed is distance units per 10 frames
-        # if distance to checkpoint reduced by a similar amount,
-        # then the car is going straight to target and ratio == 1.0
-        # opposite direction: ratio -1.0
-        # maxTravel = st[SPEED]/10
-        # direction_kinda = -diffCheckpoint/maxTravel
+        # sine 0 = 1, sine +- 180 = 0
+        # enemy distance [0,100] -> [1,101]
+        # enemy ahead and large distance = big threat
+        # enemy behind at some distance = no threat ?
+        # if at an angle (to overtake us), threat goes up
+
 
         self.prev_st = st
-        return [1, diffCheckpoint, riskHeadCollision, riskLeftCollision,
-                riskRightCollision, centralizedPosition]
+        return [1, diffCheckpoint, outOfCenter, needForSpeed, enemyThreat]
 
-    # the a argument is to receive additional arguments
-    # and also it wasn't executing without it don't @ me
+
+
+
     def learn(self, weights, *argv):
         """
         IMPLEMENT YOUR LEARNING METHOD (i.e. YOUR LOCAL SEARCH ALGORITHM) HERE
