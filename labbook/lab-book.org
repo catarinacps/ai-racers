@@ -459,3 +459,296 @@ tar czf $EXP_DIR/data/$EXP_NAME.tar.gz *
 popd
 rm -rf $SCRATCH/*
 #+end_src
+
+* Visualizações
+
+Inicializando o R...
+
+#+begin_src R :session :results output :exports both
+library(tidyverse)
+options(crayon.enabled=FALSE)
+#+end_src
+
+#+RESULTS:
+
+e agora para graficos:
+
+** HC
+
+#+begin_src R :session :results output :exports both
+hc_df <- read_csv("experiments/data/hc_ia_t1_bolsa/hc_ia_t1_bolsa.csv")
+#+end_src
+
+#+RESULTS:
+: Parsed with column specification:
+: cols(
+:   percentage = col_double(),
+:   iteration = col_double(),
+:   bot = col_character(),
+:   track = col_character(),
+:   score = col_double()
+: )
+
+#+begin_src R :session :results output graphics :file hc_complete.png :exports both :width 900 :height 900
+hc_df %>%
+  ggplot(aes(x = iteration, y = score, color = as.factor(percentage))) +
+  geom_line(size = 0.9) +
+  facet_grid(percentage ~ .) +
+  labs(x = "Iteração",
+       y = "Pontuação obtida",
+       color = "Porcentagem\nde perturbação") +
+  scale_color_discrete() +
+  theme_bw() +
+  theme(text = element_text(family = "Palatino", size = 16))
+#+end_src
+
+#+RESULTS:
+[[file:hc_complete.png]]
+
+** GA
+
+#+begin_src R :session :results output :exports both
+ga_df <- read_csv("experiments/data/ga_ia_t1_bolsa/ga_ia_t1_bolsa.csv")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Parsed with column specification:
+cols(
+  population = col_double(),
+  mutation = col_double(),
+  elitism = col_double(),
+  iteration = col_double(),
+  bot = col_character(),
+  track = col_character(),
+  score = col_double()
+)
+#+end_example
+
+#+begin_src R :session :results output graphics :file ga_complete.png :exports both :width 700 :height 700
+ga_df %>%
+  ggplot(aes(x = iteration, y = score, color = as.factor(population))) +
+  geom_line(size = 0.9) +
+  facet_grid(mutation ~ elitism, labeller = label_both) +
+  labs(x = "Iteração",
+       y = "Pontuação obtida",
+       color = "População") +
+  scale_color_discrete() +
+  theme_bw() +
+  theme(text = element_text(family = "Palatino", size = 16))
+#+end_src
+
+#+RESULTS:
+[[file:ga_complete.png]]
+
+#+begin_src R :session :results output graphics :file ga_pop.png :exports both :width 700 :height 600
+ga_df %>%
+  filter(elitism == 0.2, mutation == 0.25) %>%
+  ggplot(aes(x = iteration, y = score, color = as.factor(population))) +
+  geom_line(size = 0.9) +
+  facet_grid(population ~ .) +
+  labs(x = "Iteração",
+       y = "Pontuação obtida",
+       color = "População") +
+  scale_color_discrete() +
+  theme_bw() +
+  theme(text = element_text(family = "Palatino", size = 16))
+#+end_src
+
+#+RESULTS:
+[[file:ga_pop.png]]
+
+** CMAES
+
+#+begin_src R :session :results output :exports both
+cma_df <- read_csv("experiments/data/cmaes_ia_t1_bolsa/cmaes_ia_t1_bolsa.csv")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Parsed with column specification:
+cols(
+  sample_size = col_double(),
+  top_percentage = col_double(),
+  convergence_delta = col_double(),
+  sigma = col_double(),
+  iteration = col_double(),
+  bot = col_character(),
+  track = col_character(),
+  score = col_double()
+)
+#+end_example
+
+#+begin_src R :session :results output graphics :file cma_complete.png :exports both :width 1000 :height 400
+cma_df %>%
+  ggplot(aes(x = iteration, y = score, color = as.factor(sample_size))) +
+  geom_line(size = 0.9) +
+  facet_grid(top_percentage ~ convergence_delta, labeller = label_both) +
+  labs(x = "Iteração",
+       y = "Pontuação obtida",
+       color = "Amostra") +
+  scale_color_discrete() +
+  theme_bw() +
+  theme(text = element_text(family = "Palatino", size = 16))
+#+end_src
+
+#+RESULTS:
+[[file:cma_complete.png]]
+
+#+begin_src R :session :results output graphics :file cma_sample.png :exports both :width 700 :height 500
+cma_df %>%
+  filter(convergence_delta == 0.3, top_percentage == 0.5) %>%
+  ggplot(aes(x = iteration, y = score, color = as.factor(sample_size))) +
+  geom_line(size = 0.9) +
+  facet_grid(sample_size ~ .) +
+  labs(x = "Iteração",
+       y = "Pontuação obtida",
+       color = "Amostra") +
+  scale_color_discrete() +
+  theme_bw() +
+  theme(text = element_text(family = "Palatino", size = 16))
+#+end_src
+
+#+RESULTS:
+[[file:cma_sample.png]]
+
+* Novo set
+
+** HC
+
+#+begin_src R :session :results output :exports both
+hc_df2 <- read_csv("experiments/data/enemy-features/hc_ia_t1_DreamRobot.csv")
+#+end_src
+
+#+RESULTS:
+: Parsed with column specification:
+: cols(
+:   percentage = col_double(),
+:   iteration = col_double(),
+:   bot = col_character(),
+:   track = col_character(),
+:   score = col_double()
+: )
+
+#+begin_src R :session :results output graphics :file hc_complete_2.png :exports both :width 900 :height 900
+hc_df2 %>%
+  ggplot(aes(x = iteration, y = score, color = as.factor(percentage))) +
+  geom_line(size = 0.9) +
+  facet_grid(percentage ~ .) +
+  labs(x = "Iteração",
+       y = "Pontuação obtida",
+       color = "Porcentagem\nde perturbação") +
+  scale_color_discrete() +
+  theme_bw() +
+  theme(text = element_text(family = "Palatino", size = 16))
+#+end_src
+
+#+RESULTS:
+[[file:hc_complete_2.png]]
+
+** GA
+
+#+begin_src R :session :results output :exports both
+ga_df2 <- read_csv("experiments/data/enemy-features/ga_ia_t1_DreamRobot.csv")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Parsed with column specification:
+cols(
+  population = col_double(),
+  mutation = col_double(),
+  elitism = col_double(),
+  iteration = col_double(),
+  bot = col_character(),
+  track = col_character(),
+  score = col_double()
+)
+#+end_example
+
+#+begin_src R :session :results output graphics :file ga_complete_2.png :exports both :width 700 :height 700
+ga_df2 %>%
+  ggplot(aes(x = iteration, y = score, color = as.factor(population))) +
+  geom_line(size = 0.9) +
+  facet_grid(mutation ~ elitism, labeller = label_both) +
+  labs(x = "Iteração",
+       y = "Pontuação obtida",
+       color = "População") +
+  scale_color_discrete() +
+  theme_bw() +
+  theme(text = element_text(family = "Palatino", size = 16))
+#+end_src
+
+#+RESULTS:
+[[file:ga_complete_2.png]]
+
+#+begin_src R :session :results output graphics :file ga_pop_2.png :exports both :width 700 :height 600
+ga_df2 %>%
+  filter(elitism == 0.2, mutation == 0.25) %>%
+  ggplot(aes(x = iteration, y = score, color = as.factor(population))) +
+  geom_line(size = 0.9) +
+  facet_grid(population ~ .) +
+  labs(x = "Iteração",
+       y = "Pontuação obtida",
+       color = "População") +
+  scale_color_discrete() +
+  theme_bw() +
+  theme(text = element_text(family = "Palatino", size = 16))
+#+end_src
+
+#+RESULTS:
+[[file:ga_pop_2.png]]
+
+** CMAES
+
+#+begin_src R :session :results output :exports both
+cma_df2 <- read_csv("experiments/data/enemy-features/cmaes_ia_t1_DreamRobot.csv")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Parsed with column specification:
+cols(
+  sample_size = col_double(),
+  top_percentage = col_double(),
+  convergence_delta = col_double(),
+  sigma = col_double(),
+  iteration = col_double(),
+  bot = col_character(),
+  track = col_character(),
+  score = col_double()
+)
+#+end_example
+
+#+begin_src R :session :results output graphics :file cma_complete_2.png :exports both :width 1000 :height 400
+cma_df2 %>%
+  ggplot(aes(x = iteration, y = score, color = as.factor(sample_size))) +
+  geom_line(size = 0.9) +
+  facet_grid(top_percentage ~ convergence_delta, labeller = label_both) +
+  labs(x = "Iteração",
+       y = "Pontuação obtida",
+       color = "Amostra") +
+  scale_color_discrete() +
+  theme_bw() +
+  theme(text = element_text(family = "Palatino", size = 16))
+#+end_src
+
+#+RESULTS:
+[[file:cma_complete_2.png]]
+
+#+begin_src R :session :results output graphics :file cma_sample_2.png :exports both :width 700 :height 500
+cma_df2 %>%
+  filter(convergence_delta == 0.3, top_percentage == 0.5) %>%
+  ggplot(aes(x = iteration, y = score, color = as.factor(sample_size))) +
+  geom_line(size = 0.9) +
+  facet_grid(sample_size ~ .) +
+  labs(x = "Iteração",
+       y = "Pontuação obtida",
+       color = "Amostra") +
+  scale_color_discrete() +
+  theme_bw() +
+  theme(text = element_text(family = "Palatino", size = 16))
+#+end_src
+
+#+RESULTS:
+[[file:cma_sample_2.png]]
