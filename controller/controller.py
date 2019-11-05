@@ -1,6 +1,7 @@
 import controller_template as controller_template
 import numpy as np
 from datetime import datetime
+from math import sin
 
 # Pretend these are constant indexes for sensors[]
 DIST_LEFT = 0
@@ -20,8 +21,8 @@ class Controller(controller_template.Controller):
     sensors = [0, 0, 0, 0, 0, 0, 0, 0, 0]
     prev_st = [0, 0, 0, 0, 0, 0.1, 0, 0, 0]
     prev_score = -1000
-    features = [1, 0, 0, 0, 0, 0]
-    featureNames = ["Const", "diffCheckpoint", "riskHead", "riskLeft", "riskRight", "centralized"]
+    features = [1, 0, 0, 0, 0]
+    featureNames =  ["Const", "diffCheckpoint", "riskHeadCollision", "riskLeftCollision", "riskRightCollision"]
     num_features = len(features)
 
     def __init__(self, track, evaluate=True, bot_type=None):
@@ -73,14 +74,14 @@ class Controller(controller_template.Controller):
         """
 
         diffCheckpoint = st[DIST_CHECKPOINT] - self.prev_st[DIST_CHECKPOINT]
-        diffCheckpoint = diffCheckpoint * 2 / 1000
+        diffCheckpoint = diffCheckpoint/1000
         # times 2 cause it is double important
+
 
         # goal to minimize getting on grass.
         # if not on track, adds spoiler constant.
-        riskHeadCollision = (1 - st[ON_TRACK]) * 250 + (st[SPEED] / st[DIST_CENTER]) * 1.5
-        # 250 and not 200 to say that head collision is worse than right/left
-        # the same logic goes to the "1.5"
+        riskHeadCollision = (1 - st[ON_TRACK]) * 200 + (st[SPEED] / st[DIST_CENTER]) 
+
 
         # without considering the constants multiplication:
         # max value: 200 + 10/1 = 210
@@ -93,27 +94,14 @@ class Controller(controller_template.Controller):
         riskRightCollision = (1 - st[ON_TRACK]) * 200 + (st[SPEED] / st[DIST_RIGHT])
         riskRightCollision = (riskRightCollision - 0.1) / 209.9
 
-        centralizedPosition = (abs(st[DIST_LEFT] - st[DIST_RIGHT]) * -1) + 99
-        # max: 0 * -1 + 99 = 99
-        # min: |100 - 1| * -1 + 99 = 0
-        centralizedPosition = centralizedPosition / 99
 
-        # if (self.game_state.car1.score > self.prev_score)
-        # depois vejo como lidar quando cruza checkpoint
-        # maximize potential travel distance fulfilled
-        # speed is distance units per 10 frames
-        # if distance to checkpoint reduced by a similar amount,
-        # then the car is going straight to target and ratio == 1.0
-        # opposite direction: ratio -1.0
-        # maxTravel = st[SPEED]/10
-        # direction_kinda = -diffCheckpoint/maxTravel
+
 
         self.prev_st = st
-        return [1, diffCheckpoint, riskHeadCollision, riskLeftCollision,
-                riskRightCollision, centralizedPosition]
+        return [1, diffCheckpoint, riskHeadCollision, riskLeftCollision, riskRightCollision]
 
-    # the a argument is to receive additional arguments
-    # and also it wasn't executing without it don't @ me
+
+
     def learn(self, weights, *argv):
         """
         IMPLEMENT YOUR LEARNING METHOD (i.e. YOUR LOCAL SEARCH ALGORITHM) HERE
