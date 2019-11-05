@@ -1,11 +1,6 @@
 #!/bin/bash
 
 
-
-set -euo pipefail
-
-
-
 HOST=$(hostname)
 
 
