@@ -51,7 +51,7 @@ pushd code
 echo "percentage,iteration,bot,track,score" > $results_csv
 
 # genetic algorithms
-while read -r percentage pop; do
+while read -r percentage; do
     iter=0
 
     for i in {1..4}; do
