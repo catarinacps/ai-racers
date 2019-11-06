@@ -19,7 +19,6 @@ import simulator
 from controller1.controller import Controller as Controller1
 from controller2.controller import Controller as Controller2
 from controller3.controller import Controller as Controller3
-from controller4.controller import Controller as Controller4
 import tracks_config as track
 
 
@@ -93,7 +92,7 @@ def parser() -> (argparse.Namespace, list):
     p.add_argument('-t', nargs=1,
                    help='Specifies the track you want to select; by default, track1 will be used. '
                         'Check the \'tracks.py\' file to see the available tracks/create new ones.\n')
-    p.add_argument('-c', nargs=1, choices=['1', '2', '3', '4'],
+    p.add_argument('-c', nargs=1, choices=['1', '2', '3'],
                    help='Selects controller\n')
     mode_p.add_parser('learn',
                       help='Starts %(prog)s in learning mode. This mode does not render the game to your screen, '
@@ -202,8 +201,6 @@ if __name__ == '__main__':
         cntr_cons = Controller2
     elif chosen_controller == '3':
         cntr_cons = Controller3
-    elif chosen_controller == '4':
-        cntr_cons = Controller4
 
     if args.a is None:
         alg_args = []
