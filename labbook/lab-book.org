@@ -470,6 +470,14 @@ options(crayon.enabled=FALSE)
 #+end_src
 
 #+RESULTS:
+: ── [1mAttaching packages[22m ─────────────────────────────────────── tidyverse 1.2.1 ──
+: [32m✔[39m [34mggplot2[39m 3.2.0     [32m✔[39m [34mpurrr  [39m 0.3.2
+: [32m✔[39m [34mtibble [39m 2.1.3     [32m✔[39m [34mdplyr  [39m 0.8.1
+: [32m✔[39m [34mtidyr  [39m 0.8.3     [32m✔[39m [34mstringr[39m 1.4.0
+: [32m✔[39m [34mreadr  [39m 1.3.1     [32m✔[39m [34mforcats[39m 0.4.0
+: ── [1mConflicts[22m ────────────────────────────────────────── tidyverse_conflicts() ──
+: [31m✖[39m [34mdplyr[39m::[32mfilter()[39m masks [34mstats[39m::filter()
+: [31m✖[39m [34mdplyr[39m::[32mlag()[39m    masks [34mstats[39m::lag()
 
 e agora para graficos:
 
@@ -752,3 +760,362 @@ cma_df2 %>%
 
 #+RESULTS:
 [[file:cma_sample_2.png]]
+
+* risk-features
+
+** HC
+
+#+begin_src R :session :results output :exports both
+hc_df3 <- read_csv("experiments/data/risk-features/hc_ia_t1_DreamRobot.csv")
+#+end_src
+
+#+RESULTS:
+: Parsed with column specification:
+: cols(
+:   percentage = col_double(),
+:   iteration = col_double(),
+:   bot = col_character(),
+:   track = col_character(),
+:   score = col_double()
+: )
+
+#+begin_src R :session :results output graphics :file hc_complete_3.png :exports both :width 900 :height 900
+hc_df3 %>%
+  ggplot(aes(x = iteration, y = score, color = as.factor(percentage))) +
+  geom_line(size = 0.9) +
+  facet_grid(percentage ~ .) +
+  labs(x = "Iteração",
+       y = "Pontuação obtida",
+       color = "Porcentagem\nde perturbação") +
+  scale_color_discrete() +
+  theme_bw() +
+  theme(text = element_text(family = "Palatino", size = 16))
+#+end_src
+
+#+RESULTS:
+[[file:hc_complete_3.png]]
+
+** GA
+
+#+begin_src R :session :results output :exports both
+ga_df3 <- read_csv("experiments/data/risk-features/ga_ia_t1_DreamRobot.csv")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Parsed with column specification:
+cols(
+  population = col_double(),
+  mutation = col_double(),
+  elitism = col_double(),
+  iteration = col_double(),
+  bot = col_character(),
+  track = col_character(),
+  score = col_double()
+)
+#+end_example
+
+#+begin_src R :session :results output graphics :file ga_complete_3.png :exports both :width 700 :height 700
+ga_df3 %>%
+  ggplot(aes(x = iteration, y = score, color = as.factor(population))) +
+  geom_line(size = 0.9) +
+  facet_grid(mutation ~ elitism, labeller = label_both) +
+  labs(x = "Iteração",
+       y = "Pontuação obtida",
+       color = "População") +
+  scale_color_discrete() +
+  theme_bw() +
+  theme(text = element_text(family = "Palatino", size = 16))
+#+end_src
+
+#+RESULTS:
+[[file:ga_complete_3.png]]
+
+#+begin_src R :session :results output graphics :file ga_pop_3.png :exports both :width 700 :height 600
+ga_df3 %>%
+  filter(elitism == 0.2, mutation == 0.25) %>%
+  ggplot(aes(x = iteration, y = score, color = as.factor(population))) +
+  geom_line(size = 0.9) +
+  facet_grid(population ~ .) +
+  labs(x = "Iteração",
+       y = "Pontuação obtida",
+       color = "População") +
+  scale_color_discrete() +
+  theme_bw() +
+  theme(text = element_text(family = "Palatino", size = 16))
+#+end_src
+
+#+RESULTS:
+[[file:ga_pop_3.png]]
+
+** CMAES
+
+#+begin_src R :session :results output :exports both
+cma_df3 <- read_csv("experiments/data/risk-features/cmaes_ia_t1_DreamRobot.csv")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Parsed with column specification:
+cols(
+  sample_size = col_double(),
+  top_percentage = col_double(),
+  convergence_delta = col_double(),
+  sigma = col_double(),
+  iteration = col_double(),
+  bot = col_character(),
+  track = col_character(),
+  score = col_double()
+)
+#+end_example
+
+#+begin_src R :session :results output graphics :file cma_complete_3.png :exports both :width 1000 :height 400
+cma_df3 %>%
+  ggplot(aes(x = iteration, y = score, color = as.factor(sample_size))) +
+  geom_line(size = 0.9) +
+  facet_grid(top_percentage ~ convergence_delta, labeller = label_both) +
+  labs(x = "Iteração",
+       y = "Pontuação obtida",
+       color = "Amostra") +
+  scale_color_discrete() +
+  theme_bw() +
+  theme(text = element_text(family = "Palatino", size = 16))
+#+end_src
+
+#+RESULTS:
+[[file:cma_complete_3.png]]
+
+#+begin_src R :session :results output graphics :file cma_sample_3.png :exports both :width 700 :height 500
+cma_df3 %>%
+  filter(convergence_delta == 0.3, top_percentage == 0.5) %>%
+  ggplot(aes(x = iteration, y = score, color = as.factor(sample_size))) +
+  geom_line(size = 0.9) +
+  facet_grid(sample_size ~ .) +
+  labs(x = "Iteração",
+       y = "Pontuação obtida",
+       color = "Amostra") +
+  scale_color_discrete() +
+  theme_bw() +
+  theme(text = element_text(family = "Palatino", size = 16))
+#+end_src
+
+#+RESULTS:
+[[file:cma_sample_3.png]]
+
+* interlago
+
+
+** HC
+
+#+begin_src R :session :results output :exports both
+hc_dfi <- read_csv("experiments/data/interlagos/conj2/hc_ia_t1_DreamRobot/results/hc_ia_t1_DreamRobot.csv")
+
+hc_dfi1 <- read_csv("experiments/data/interlagos/conj1/hc_ia_t1_DreamRobot/results/hc_ia_t1_DreamRobot.csv") %>%
+  filter(percentage == 0.7) %>%
+  mutate(feature = 1)
+
+hc_dfi2 <- read_csv("experiments/data/interlagos/conj2/hc_ia_t1_DreamRobot/results/hc_ia_t1_DreamRobot.csv") %>%
+  filter(percentage == 0.5) %>%
+  mutate(feature = 2)
+
+hc_dfi3 <- read_csv("experiments/data/interlagos/conj3/hc_ia_t1_DreamRobot/results/hc_ia_t1_DreamRobot.csv") %>%
+  filter(percentage == 0.2) %>%
+  mutate(feature = 3)
+
+hc_dfi <- hc_dfi1 %>%
+  bind_rows(hc_dfi2) %>%
+  bind_rows(hc_dfi3)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Parsed with column specification:
+cols(
+  percentage = col_double(),
+  iteration = col_double(),
+  bot = col_character(),
+  track = col_character(),
+  score = col_double()
+)
+Parsed with column specification:
+cols(
+  percentage = col_double(),
+  iteration = col_double(),
+  bot = col_character(),
+  track = col_character(),
+  score = col_double()
+)
+Parsed with column specification:
+cols(
+  percentage = col_double(),
+  iteration = col_double(),
+  bot = col_character(),
+  track = col_character(),
+  score = col_double()
+)
+Parsed with column specification:
+cols(
+  percentage = col_double(),
+  iteration = col_double(),
+  bot = col_character(),
+  track = col_character(),
+  score = col_double()
+)
+#+end_example
+
+#+begin_src R :session :results output graphics :file hc_complete_inter.png :exports both :width 900 :height 800
+hc_dfi %>%
+  ggplot(aes(x = iteration, y = score)) +
+  geom_line(size = 0.9, color = "slateblue2") +
+  facet_grid(feature ~ ., labeller = label_both) +
+  labs(x = "Iteração",
+       y = "Pontuação obtida",
+       color = "Porcentagem\nde perturbação") +
+  scale_color_discrete() +
+  theme_bw() +
+  theme(text = element_text(family = "Palatino", size = 16))
+#+end_src
+
+#+RESULTS:
+[[file:hc_complete_inter.png]]
+
+** GA
+
+#+begin_src R :session :results output :exports both
+ga_dfi1 <- read_csv("experiments/data/interlagos/conj1/ga_ia_t1_DreamRobot/results/ga_ia_t1_DreamRobot.csv") %>%
+  filter(population == 60) %>%
+  mutate(feature = 1)
+
+ga_dfi2 <- read_csv("experiments/data/interlagos/conj2/ga_ia_t1_DreamRobot/results/ga_ia_t1_DreamRobot.csv") %>%
+  filter(population == 40, mutation == 0.25, elitism == 0.2) %>%
+  mutate(feature = 2)
+
+ga_dfi3 <- read_csv("experiments/data/interlagos/conj3/ga_ia_t1_DreamRobot/results/ga_ia_t1_DreamRobot.csv") %>%
+  filter(population == 60) %>%
+  mutate(feature = 3)
+
+ga_dfi <- ga_dfi1 %>%
+  bind_rows(ga_dfi2) %>%
+  bind_rows(ga_dfi3)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Parsed with column specification:
+cols(
+  population = col_double(),
+  mutation = col_double(),
+  elitism = col_double(),
+  iteration = col_double(),
+  bot = col_character(),
+  track = col_character(),
+  score = col_double()
+)
+Parsed with column specification:
+cols(
+  population = col_double(),
+  mutation = col_double(),
+  elitism = col_double(),
+  iteration = col_double(),
+  bot = col_character(),
+  track = col_character(),
+  score = col_double()
+)
+Parsed with column specification:
+cols(
+  population = col_double(),
+  mutation = col_double(),
+  elitism = col_double(),
+  iteration = col_double(),
+  bot = col_character(),
+  track = col_character(),
+  score = col_double()
+)
+#+end_example
+
+#+begin_src R :session :results output graphics :file ga_complete_inter.png :exports both :width 900 :height 800
+ga_dfi %>%
+  ggplot(aes(x = iteration, y = score)) +
+  geom_line(size = 0.9, color = "cyan3") +
+  facet_grid(feature ~ ., labeller = label_both) +
+  labs(x = "Iteração",
+       y = "Pontuação obtida") +
+  scale_color_discrete() +
+  theme_bw() +
+  theme(text = element_text(family = "Palatino", size = 16))
+#+end_src
+
+#+RESULTS:
+[[file:ga_complete_inter.png]]
+
+** CMAES
+
+#+begin_src R :session :results output :exports both
+cma_dfi1 <- read_csv("experiments/data/interlagos/conj1/cmaes_ia_t1_DreamRobot/results/cmaes_ia_t1_DreamRobot.csv") %>%
+  filter(sample_size == 20) %>%
+  mutate(feature = 1)
+
+cma_dfi2 <- read_csv("experiments/data/interlagos/conj2/cmaes_ia_t1_DreamRobot/results/cmaes_ia_t1_DreamRobot.csv") %>%
+  filter(convergence_delta == 0.5) %>%
+  mutate(feature = 2)
+
+cma_dfi3 <- read_csv("experiments/data/interlagos/conj3/cmaes_ia_t1_DreamRobot/results/cmaes_ia_t1_DreamRobot.csv") %>%
+  filter(sigma == 0.1) %>%
+  mutate(feature = 3)
+
+cma_dfi <- cma_dfi1 %>%
+  bind_rows(cma_dfi2) %>%
+  bind_rows(cma_dfi3)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Parsed with column specification:
+cols(
+  sample_size = col_double(),
+  top_percentage = col_double(),
+  convergence_delta = col_double(),
+  sigma = col_double(),
+  iteration = col_double(),
+  bot = col_character(),
+  track = col_character(),
+  score = col_double()
+)
+Parsed with column specification:
+cols(
+  sample_size = col_double(),
+  top_percentage = col_double(),
+  convergence_delta = col_double(),
+  sigma = col_double(),
+  iteration = col_double(),
+  bot = col_character(),
+  track = col_character(),
+  score = col_double()
+)
+Parsed with column specification:
+cols(
+  sample_size = col_double(),
+  top_percentage = col_double(),
+  convergence_delta = col_double(),
+  sigma = col_double(),
+  iteration = col_double(),
+  bot = col_character(),
+  track = col_character(),
+  score = col_double()
+)
+#+end_example
+
+#+begin_src R :session :results output graphics :file cma_complete_inter.png :exports both :width 900 :height 800
+cma_dfi %>%
+  ggplot(aes(x = iteration, y = score)) +
+  geom_line(size = 0.9, color = "orchid1") +
+  facet_grid(feature ~ ., labeller = label_both) +
+  labs(x = "Iteração",
+       y = "Pontuação obtida") +
+  scale_color_discrete() +
+  theme_bw() +
+  theme(text = element_text(family = "Palatino", size = 16))
+#+end_src
+
+#+RESULTS:
+[[file:cma_complete_inter.png]]
