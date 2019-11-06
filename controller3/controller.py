@@ -25,48 +25,9 @@ class Controller(controller.Controller):
         f.write(weights)
         f.close()
 
-    # Input initial weights, percentage perturbance
-    # Output better weights
-    def hill_climbing(self, weights, percentage=0.5):
 
-        percentage = float(percentage)
 
-        best_score = self.run_episode(weights)
-        #best_parameters = [1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6]
-        best_parameters = weights
-        max_iterations = 100
-        iteration = 1
-        improvement = best_score
-        desespero = 1
 
-        while improvement > 0 or iteration <= max_iterations:
-            print("\n[Iter ", iteration, "]")
-            cur_score = best_score
-            cur_parameters = list(best_parameters)
-            changed = False
-            print(cur_parameters)
-            print("Scores found: "),
-            # exhaustively generate neighbors based on input percentage
-            for i, w in enumerate(cur_parameters):
-                for sign in [1, -1]:
-                    # neighbor is a small (positive or negative) perturbation in one weight
-                    neighbor = list(best_parameters)
-                    neighbor[i] += sign*0.5*desespero
-                    new_score = self.run_episode(neighbor)
-                    print(new_score, end=" ")
-
-                    if new_score > best_score:
-                        changed = True
-                        desespero = 1
-                        best_score = new_score
-                        best_parameters = neighbor
-                        print("\n[Iter ", iteration, " Weight ", i, " Sign ",sign, "] New best: ", best_score)
-                        print(best_parameters, "\n")
-
-            iteration += 1
-            improvement = best_score - cur_score
-            if not changed:
-                desespero += 0.5
 
     def hill_climbing_new(self, weights, percentage=0.5):
 
@@ -117,3 +78,50 @@ class Controller(controller.Controller):
             pickle.dump([best_score, iteration, improvement, desespero], info_file)
 
         return best_parameters, best_score
+
+
+
+
+    # OLD CMA-ES WITH COUPLED LOOP
+
+    # Input initial weights, percentage perturbance
+    # Output better weights
+    def hill_climbing(self, weights, percentage=0.5):
+
+        percentage = float(percentage)
+
+        best_score = self.run_episode(weights)
+        best_parameters = weights
+        max_iterations = 100
+        iteration = 1
+        improvement = best_score
+        desespero = 1
+
+        while improvement > 0 or iteration <= max_iterations:
+            print("\n[Iter ", iteration, "]")
+            cur_score = best_score
+            cur_parameters = list(best_parameters)
+            changed = False
+            print(cur_parameters)
+            print("Scores found: "),
+            # exhaustively generate neighbors based on input percentage
+            for i, w in enumerate(cur_parameters):
+                for sign in [1, -1]:
+                    # neighbor is a small (positive or negative) perturbation in one weight
+                    neighbor = list(best_parameters)
+                    neighbor[i] += sign*0.5*desespero
+                    new_score = self.run_episode(neighbor)
+                    print(new_score, end=" ")
+
+                    if new_score > best_score:
+                        changed = True
+                        desespero = 1
+                        best_score = new_score
+                        best_parameters = neighbor
+                        print("\n[Iter ", iteration, " Weight ", i, " Sign ",sign, "] New best: ", best_score)
+                        print(best_parameters, "\n")
+
+            iteration += 1
+            improvement = best_score - cur_score
+            if not changed:
+                desespero += 0.5

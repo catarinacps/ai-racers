@@ -116,7 +116,6 @@ class Controller(controller.Controller):
 
         for i in range(population_size-1):
             population.append(
-                # np.random.uniform(low=np.amin(weights), high=np.amax(weights), size=len(weights))
                 np.random.uniform(low=-1.0, high=1.0, size=len(weights))
             )
 
@@ -146,16 +145,6 @@ class Controller(controller.Controller):
 
         return fitness
 
-    # RIP
-    def compute_fitness_par(self, population):
-
-        fitness = []
-
-        pool = mp.Pool(mp.cpu_count())
-
-        fitness = pool.map(self.run_episode, population)
-
-        return fitness
 
     # Input parameters: list of individual solutions; fitness; fraction to keep by elitism; fraction to keep by roulette
     # Output returned: selected individuals
@@ -218,21 +207,6 @@ class Controller(controller.Controller):
             pool.apply(cross_individual, (np.array(population), mask,))
             for _ in range(num_missing_individuals)]
 
-        # for _ in range(num_missing_individuals):
-        #     dad1_idx = np.random.randint(0, len(population))
-        #     dad2_idx = np.random.randint(0, len(population))
-        #     dad1 = population[dad1_idx]
-        #     dad2 = population[dad2_idx]
-        #     son = []
-
-        #     for i, gene in enumerate(mask):
-        #         if gene == 0:
-        #             son.append(dad1[i])
-        #         else:
-        #             son.append(dad2[i])
-
-        #     son = np.array(son)
-        #     missing_population.append(son)
 
         missing_population = np.array(missing_population)
         missing_population = self.mutate_population(missing_population, mutation_rate, perturbation_range)
